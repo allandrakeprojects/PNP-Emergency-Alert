@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "440227364588",
+    "firebase_url": "https://pnp-emergency-alert-app-2b7fd.firebaseio.com",
+    "project_id": "pnp-emergency-alert-app-2b7fd",
+    "storage_bucket": "pnp-emergency-alert-app-2b7fd.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:440227364588:android:36d31295000689c9",
+        "android_client_info": {
+          "package_name": "com.example.pnpemergencyalert"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "440227364588-rl7n6kpdu5khnvo4cjfhpaoeemspaet3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1q9TPwmA1gwtB2qGJKAa8QG4LxIzDLms"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "440227364588-rl7n6kpdu5khnvo4cjfhpaoeemspaet3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
