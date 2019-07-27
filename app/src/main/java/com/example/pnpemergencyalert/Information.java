@@ -5,17 +5,17 @@ public class Information {
     public String address;
     public String email;
     public String gender;
-    public String imageUrl;
+//    public String imageUrl;
 
     public Information(){
 
     }
 
-    public Information(String name, String address, String email, String gender, String imageUrl) {
+    public Information(String name, String address, String email, String gender) {
         this.name = name;
         this.address = address;
         this.email = email;
         this.gender = gender;
-        this.imageUrl = imageUrl;
+//        this.imageUrl = imageUrl;
     }
 }

@@ -35,6 +35,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
@@ -53,20 +55,20 @@ import java.util.List;
 public class RegisterActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
     //Widgets
-    EditText editTextFullName, editTextAddress, editTextEmail, editTextPassword;
-    Spinner spinnerGender;
-    Button buttonRegister;
-    ProgressDialog progressDialog;
-    RelativeLayout buttonPicture;
-    ImageView imageViewProfile;
+    private EditText editTextFullName, editTextAddress, editTextEmail, editTextPassword;
+    private Spinner spinnerGender;
+    private Button buttonRegister;
+    private ProgressDialog progressDialog;
+    private RelativeLayout buttonPicture;
+    private ImageView imageViewProfile;
     private int GALLERY = 1, CAMERA = 2;
     private static final String IMAGE_DIRECTORY = "/PNP Emergency Alert";
 
-//    private StorageReference
 
     //Firebase
-    FirebaseAuth firebaseAuth;
-    DatabaseReference databaseReference;
+    private FirebaseAuth firebaseAuth;
+    private StorageReference storageReference;
+    private DatabaseReference databaseReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +78,7 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
 
         //Firebase
         firebaseAuth = FirebaseAuth.getInstance();
+        storageReference = FirebaseStorage.getInstance().getReference();
         databaseReference = FirebaseDatabase.getInstance().getReference();
 
         Spinner spinner = findViewById(R.id.spinner);
@@ -107,6 +110,124 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
 
         INIT();
     }
+
+    private void saveUser(){
+        String fullName = editTextFullName.getText().toString().trim();
+        String address = editTextAddress.getText().toString().trim();
+        String email = editTextEmail.getText().toString().trim();
+        String gender;
+        try {
+            gender = spinnerGender.getSelectedItem().toString();
+        } catch(Exception n){
+            gender = "";
+        }
+
+        Information information = new Information(fullName, address, email, gender);
+        FirebaseUser user = firebaseAuth.getCurrentUser();
+        databaseReference.child("Users").child(user.getUid()).setValue(information);
+        Toast.makeText(RegisterActivity.this, "Information Saved!", Toast.LENGTH_SHORT).show();
+    }
+
+    public void INIT(){
+        buttonRegister.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String fullName = editTextFullName.getText().toString().trim();
+                String address = editTextAddress.getText().toString().trim();
+                String email = editTextEmail.getText().toString().trim();
+                String pass = editTextPassword.getText().toString().trim();
+                String gender;
+                try {
+                    gender = spinnerGender.getSelectedItem().toString();
+                } catch(Exception n){
+                    gender = "";
+                }
+
+//                Validation
+//                if(TextUtils.isEmpty(fullName)){
+//                    Toast.makeText(RegisterActivity.this, "Please enter your full name", Toast.LENGTH_SHORT).show();
+//                    return;
+//                }
+//                if(TextUtils.isEmpty(address)){
+//                    Toast.makeText(RegisterActivity.this, "Please enter your address", Toast.LENGTH_SHORT).show();
+//                    return;
+//                }
+//                if(TextUtils.isEmpty(email)){
+//                    Toast.makeText(RegisterActivity.this, "Please enter your email", Toast.LENGTH_SHORT).show();
+//                    return;
+//                }
+//                if(!address.equals("@")){
+//                    Toast.makeText(RegisterActivity.this, "Please provide a valid email", Toast.LENGTH_SHORT).show();
+//                    return;
+//                }
+//                if(TextUtils.isEmpty(pass)){
+//                    Toast.makeText(RegisterActivity.this, "Please enter your password", Toast.LENGTH_SHORT).show();
+//                    return;
+//                }
+//                if(gender.equals("Select Gender")){
+//                    Toast.makeText(RegisterActivity.this, "Please select your gender", Toast.LENGTH_SHORT).show();
+//                    return;
+//                }
+
+                progressDialog.setMessage("Registering User...");
+                progressDialog.show();
+
+                final String finalName = gender;
+                firebaseAuth.createUserWithEmailAndPassword(email,pass).addOnCompleteListener(RegisterActivity.this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        progressDialog.dismiss();
+                        if (task.isSuccessful()) {
+                            saveUser();
+                            Toast.makeText(RegisterActivity.this, "Success", Toast.LENGTH_SHORT).show();
+//                            mDatabase = FirebaseDatabase.getInstance().getReference();
+//                            Firebase.setAndroidContext(UserSignUp.this);
+//                            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+//                            String uid = user.getUid();
+//                            writeNewUser(uid, finalName);
+                            //NEW
+//                            sendEmailVerification();
+                        }
+                        else{
+                            Toast.makeText(RegisterActivity.this, "Error " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+
+                    }
+                });
+            }
+        });
+    }
+    private void changeStatusBarColor() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Window window = getWindow();
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+//            window.setStatusBarColor(Color.TRANSPARENT);
+//            window.setStatusBarColor(getResources().getColor(R.color.register_bk_color));
+        }
+    }
+
+    public void onLoginClick(View view){
+        startActivity(new Intent(this,LoginActivity.class));
+        overridePendingTransition(R.anim.slide_in_left,android.R.anim.slide_out_right);
+
+    }
+
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+//        String text = parent.getItemAtPosition(position).toString();
+//        Toast.makeText(parent.getContext(), text, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> adapterView) {
+
+    }
+
+
+
+
+
 
     private void showPictureDialog(){
         AlertDialog.Builder pictureDialog = new AlertDialog.Builder(this);
@@ -236,140 +357,5 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
                 })
                 .onSameThread()
                 .check();
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    private void saveUser(){
-        String fullName = editTextFullName.getText().toString().trim();
-        String address = editTextAddress.getText().toString().trim();
-        String email = editTextEmail.getText().toString().trim();
-        String gender;
-        try {
-            gender = spinnerGender.getSelectedItem().toString();
-        } catch(Exception n){
-            gender = "";
-        }
-
-        Information information = new Information(fullName, address, email, gender);
-        FirebaseUser user = firebaseAuth.getCurrentUser();
-        databaseReference.child("Users").child(user.getUid()).setValue(information);
-        Toast.makeText(RegisterActivity.this, "Information Saved!", Toast.LENGTH_SHORT).show();
-    }
-
-    public void INIT(){
-        buttonRegister.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String fullName = editTextFullName.getText().toString().trim();
-                String address = editTextAddress.getText().toString().trim();
-                String email = editTextEmail.getText().toString().trim();
-                String pass = editTextPassword.getText().toString().trim();
-                String gender;
-                try {
-                    gender = spinnerGender.getSelectedItem().toString();
-                } catch(Exception n){
-                    gender = "";
-                }
-
-//                Validation
-//                if(TextUtils.isEmpty(fullName)){
-//                    Toast.makeText(RegisterActivity.this, "Please enter your full name", Toast.LENGTH_SHORT).show();
-//                    return;
-//                }
-//                if(TextUtils.isEmpty(address)){
-//                    Toast.makeText(RegisterActivity.this, "Please enter your address", Toast.LENGTH_SHORT).show();
-//                    return;
-//                }
-//                if(TextUtils.isEmpty(email)){
-//                    Toast.makeText(RegisterActivity.this, "Please enter your email", Toast.LENGTH_SHORT).show();
-//                    return;
-//                }
-//                if(!address.equals("@")){
-//                    Toast.makeText(RegisterActivity.this, "Please provide a valid email", Toast.LENGTH_SHORT).show();
-//                    return;
-//                }
-//                if(TextUtils.isEmpty(pass)){
-//                    Toast.makeText(RegisterActivity.this, "Please enter your password", Toast.LENGTH_SHORT).show();
-//                    return;
-//                }
-//                if(gender.equals("Select Gender")){
-//                    Toast.makeText(RegisterActivity.this, "Please select your gender", Toast.LENGTH_SHORT).show();
-//                    return;
-//                }
-
-                progressDialog.setMessage("Registering User...");
-                progressDialog.show();
-
-                final String finalName = gender;
-                firebaseAuth.createUserWithEmailAndPassword(email,pass).addOnCompleteListener(RegisterActivity.this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        progressDialog.dismiss();
-                        if (task.isSuccessful()) {
-                            saveUser();
-                            Toast.makeText(RegisterActivity.this, "Success", Toast.LENGTH_SHORT).show();
-//                            mDatabase = FirebaseDatabase.getInstance().getReference();
-//                            Firebase.setAndroidContext(UserSignUp.this);
-//                            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-//                            String uid = user.getUid();
-//                            writeNewUser(uid, finalName);
-                            //NEW
-//                            sendEmailVerification();
-                        }
-                        else{
-                            Toast.makeText(RegisterActivity.this, "Error " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
-                        }
-
-                    }
-                });
-            }
-        });
-    }
-    private void changeStatusBarColor() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            Window window = getWindow();
-            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-//            window.setStatusBarColor(Color.TRANSPARENT);
-//            window.setStatusBarColor(getResources().getColor(R.color.register_bk_color));
-        }
-    }
-
-    public void onLoginClick(View view){
-        startActivity(new Intent(this,LoginActivity.class));
-        overridePendingTransition(R.anim.slide_in_left,android.R.anim.slide_out_right);
-
-    }
-
-
-    @Override
-    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-//        String text = parent.getItemAtPosition(position).toString();
-//        Toast.makeText(parent.getContext(), text, Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    public void onNothingSelected(AdapterView<?> adapterView) {
-
     }
 }
