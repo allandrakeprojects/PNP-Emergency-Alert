@@ -3,19 +3,24 @@ package com.example.pnpemergencyalert;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.provider.MediaStore;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -28,7 +33,10 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
@@ -36,7 +44,9 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
@@ -63,12 +73,14 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
     private ImageView imageViewProfile;
     private int GALLERY = 1, CAMERA = 2;
     private static final String IMAGE_DIRECTORY = "/PNP Emergency Alert";
+    private Uri contentURI;
 
 
     //Firebase
     private FirebaseAuth firebaseAuth;
     private StorageReference storageReference;
     private DatabaseReference databaseReference;
+    private DatabaseReference databaseReferenceUploads;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,8 +90,9 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
 
         //Firebase
         firebaseAuth = FirebaseAuth.getInstance();
-        storageReference = FirebaseStorage.getInstance().getReference();
+        storageReference = FirebaseStorage.getInstance().getReference("uploads");
         databaseReference = FirebaseDatabase.getInstance().getReference();
+        databaseReferenceUploads = FirebaseDatabase.getInstance().getReference("uploads");
 
         Spinner spinner = findViewById(R.id.spinner);
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
@@ -101,31 +114,160 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
         buttonPicture = (RelativeLayout) findViewById(R.id.picture);
         imageViewProfile = (ImageView) findViewById(R.id.imageViewProfile);
 
+        INIT();
+
         buttonPicture.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 showPictureDialog();
             }
         });
-
-        INIT();
     }
 
-    private void saveUser(){
-        String fullName = editTextFullName.getText().toString().trim();
-        String address = editTextAddress.getText().toString().trim();
-        String email = editTextEmail.getText().toString().trim();
-        String gender;
-        try {
-            gender = spinnerGender.getSelectedItem().toString();
-        } catch(Exception n){
-            gender = "";
-        }
+    private String getFileExtension(Uri uri) {
+        ContentResolver cR = getContentResolver();
+        MimeTypeMap mime = MimeTypeMap.getSingleton();
+        return mime.getExtensionFromMimeType(cR.getType(uri));
+    }
 
-        Information information = new Information(fullName, address, email, gender);
-        FirebaseUser user = firebaseAuth.getCurrentUser();
-        databaseReference.child("Users").child(user.getUid()).setValue(information);
-        Toast.makeText(RegisterActivity.this, "Information Saved!", Toast.LENGTH_SHORT).show();
+    private void uploadFile(){
+        final StorageReference storageReference1 = storageReference.child(System.currentTimeMillis() + ".jpg");
+
+        imageViewProfile.setDrawingCacheEnabled(true);
+        imageViewProfile.buildDrawingCache();
+        Bitmap bitmap = ((BitmapDrawable) imageViewProfile.getDrawable()).getBitmap();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] data = baos.toByteArray();
+
+        UploadTask uploadTask = storageReference1.putBytes(data);
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Handle unsuccessful uploads
+            }
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                progressDialog.dismiss();
+                Toast.makeText(RegisterActivity.this, "Information Saved!", Toast.LENGTH_SHORT).show();
+                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
+                // ...
+            }
+        });
+
+        Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+            @Override
+            public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                if (!task.isSuccessful()) {
+                    throw task.getException();
+                }
+
+                // Continue with the task to get the download URL
+                return storageReference1.getDownloadUrl();
+            }
+        }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+            @Override
+            public void onComplete(@NonNull Task<Uri> task) {
+                if (task.isSuccessful()) {
+                    Uri downloadUri = task.getResult();
+
+//                    Handler handler = new Handler();
+//                    handler.postDelayed(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            progressBar.setProgress(0);
+//                        }
+//                    }, 500);
+
+                    String fullName = editTextFullName.getText().toString().trim();
+                    String address = editTextAddress.getText().toString().trim();
+                    String email = editTextEmail.getText().toString().trim();
+                    String gender;
+
+                    try {
+                        gender = spinnerGender.getSelectedItem().toString();
+                    } catch(Exception n){
+                        gender = "";
+                    }
+
+                    Information information = new Information(fullName, address, email, gender, downloadUri.toString());
+                    FirebaseUser user = firebaseAuth.getCurrentUser();
+                    databaseReference.child("Users").child(user.getUid()).setValue(information);
+                } else {
+                    // Handle failures
+                    // ...
+                }
+            }
+        });
+
+//        .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+//            @Override
+//            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+
+//            }
+//        })
+//        .addOnFailureListener(new OnFailureListener() {
+//            @Override
+//            public void onFailure(@NonNull Exception e){
+//                Toast.makeText(RegisterActivity.this, e.getMessage(), Toast.LENGTH_SHORT);
+//            }
+//        })
+//        .addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+//            @Override
+//            public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+//                double progress = (100.0 * taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount());
+//    //                    progressBar.setProgress((int) progress);
+//            }
+//        });
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private void saveUser(){
+        uploadFile();
     }
 
     public void INIT(){
@@ -144,30 +286,35 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
                 }
 
 //                Validation
-//                if(TextUtils.isEmpty(fullName)){
-//                    Toast.makeText(RegisterActivity.this, "Please enter your full name", Toast.LENGTH_SHORT).show();
-//                    return;
-//                }
-//                if(TextUtils.isEmpty(address)){
-//                    Toast.makeText(RegisterActivity.this, "Please enter your address", Toast.LENGTH_SHORT).show();
-//                    return;
-//                }
-//                if(TextUtils.isEmpty(email)){
-//                    Toast.makeText(RegisterActivity.this, "Please enter your email", Toast.LENGTH_SHORT).show();
-//                    return;
-//                }
-//                if(!address.equals("@")){
-//                    Toast.makeText(RegisterActivity.this, "Please provide a valid email", Toast.LENGTH_SHORT).show();
-//                    return;
-//                }
-//                if(TextUtils.isEmpty(pass)){
-//                    Toast.makeText(RegisterActivity.this, "Please enter your password", Toast.LENGTH_SHORT).show();
-//                    return;
-//                }
-//                if(gender.equals("Select Gender")){
-//                    Toast.makeText(RegisterActivity.this, "Please select your gender", Toast.LENGTH_SHORT).show();
-//                    return;
-//                }
+                String backgroundImageName = String.valueOf(imageViewProfile.getTag());
+                if(backgroundImageName.equals("defaultImage")){
+                    Toast.makeText(RegisterActivity.this, "Please select a photo of you.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if(TextUtils.isEmpty(fullName)){
+                    Toast.makeText(RegisterActivity.this, "Please enter your full name.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if(TextUtils.isEmpty(address)){
+                    Toast.makeText(RegisterActivity.this, "Please enter your address.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if(TextUtils.isEmpty(email)){
+                    Toast.makeText(RegisterActivity.this, "Please enter your email.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if(!email.contains("@")){
+                    Toast.makeText(RegisterActivity.this, "Please provide a valid email.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if(TextUtils.isEmpty(pass)){
+                    Toast.makeText(RegisterActivity.this, "Please enter your password.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if(gender.equals("Select Gender")){
+                    Toast.makeText(RegisterActivity.this, "Please select your gender.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
 
                 progressDialog.setMessage("Registering User...");
                 progressDialog.show();
@@ -176,10 +323,9 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
                 firebaseAuth.createUserWithEmailAndPassword(email,pass).addOnCompleteListener(RegisterActivity.this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
-                        progressDialog.dismiss();
                         if (task.isSuccessful()) {
                             saveUser();
-                            Toast.makeText(RegisterActivity.this, "Success", Toast.LENGTH_SHORT).show();
+//                            Toast.makeText(RegisterActivity.this, "Success", Toast.LENGTH_SHORT).show();
 //                            mDatabase = FirebaseDatabase.getInstance().getReference();
 //                            Firebase.setAndroidContext(UserSignUp.this);
 //                            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -273,11 +419,12 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
         }
         if (requestCode == GALLERY) {
             if (data != null) {
-                Uri contentURI = data.getData();
+                contentURI = data.getData();
                 try {
                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), contentURI);
                     String path = saveImage(bitmap);
-                    Toast.makeText(RegisterActivity.this, "Image Saved!", Toast.LENGTH_SHORT).show();
+                    imageViewProfile.setTag("changesImage");
+//                    Toast.makeText(RegisterActivity.this, "Image Saved!", Toast.LENGTH_SHORT).show();
                     imageViewProfile.setImageBitmap(bitmap);
 
                 } catch (IOException e) {
@@ -290,7 +437,8 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
             Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
             imageViewProfile.setImageBitmap(thumbnail);
             saveImage(thumbnail);
-            Toast.makeText(RegisterActivity.this, "Image Saved!", Toast.LENGTH_SHORT).show();
+            imageViewProfile.setTag("changesImage");
+//            Toast.makeText(RegisterActivity.this, "Image Saved!", Toast.LENGTH_SHORT).show();
         }
     }
 
