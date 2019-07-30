@@ -1,5 +1,6 @@
 package com.example.pnpemergencyalert;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -131,15 +132,18 @@ public class FragmentMenu02 extends Fragment {
                 editTextProfileFullName.setText(information.getName());
                 editTextProfileAddress.setText(information.getAddress());
                 editTextProfileEmail.setText(information.getEmail());
-                editTextProfilePassword.setText("123456789");
+                editTextProfilePassword.setText("dEFaultPasSW0Rd16");
                 if(information.getGender().equals("Male")){
                     spinnerProfileGender.setSelection(1);
                 } else{
                     spinnerProfileGender.setSelection(2);
                 }
-                Glide.with(getContext())
-                        .load(information.getImageUrl())
-                        .into(imageViewProfile);
+                final Context context = getContext();
+                if (isValidContextForGlide(context)) {
+                    Glide.with(context)
+                            .load(information.getImageUrl())
+                            .into(imageViewProfile);
+                }
                 textViewSideMenuName.setText(information.getName());
                 if(information.getType().equals("C")){
                     textViewSideMenuType.setText("Citizen");
@@ -148,9 +152,6 @@ public class FragmentMenu02 extends Fragment {
                 } else if(information.getType().equals("S")){
                     textViewSideMenuType.setText("SUPERVISOR");
                 }
-                Glide.with(getContext())
-                        .load(information.getImageUrl())
-                        .into(imageViewSideMenuProfile);
                 imageURL = information.getImageUrl();
             }
 
@@ -220,6 +221,7 @@ public class FragmentMenu02 extends Fragment {
 
                 if(isImageChanges){
                     uploadFile();
+                    changePassword();
                 } else{
                     Handler handler = new Handler();
                     handler.postDelayed(new Runnable() {
@@ -237,14 +239,42 @@ public class FragmentMenu02 extends Fragment {
                             }
                             Information information = new Information(fullName, address, email, gender, imageURL, "C");
                             databaseReference.setValue(information);
+                            changePassword();
+                            Toast.makeText(getContext(), "Your information already updated!", Toast.LENGTH_SHORT).show();
                         }
                     }, 3000);
-
                 }
             }
         });
     }
 
+    public static boolean isValidContextForGlide(final Context context) {
+        if (context == null) {
+            return false;
+        }
+        if (context instanceof Activity) {
+            final Activity activity = (Activity) context;
+            if (activity.isDestroyed() || activity.isFinishing()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void changePassword(){
+        String pass = editTextProfilePassword.getText().toString().trim();
+        if(!pass.equals("dEFaultPasSW0Rd16")){
+            FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+            firebaseUser.updatePassword(pass).addOnCompleteListener(new OnCompleteListener<Void>() {
+                @Override
+                public void onComplete(@NonNull Task<Void> task) {
+                    if(task.isSuccessful()){
+
+                    }
+                }
+            });
+        }
+    }
 
     private void uploadFile(){
         final StorageReference storageReference1 = storageReference.child(System.currentTimeMillis() + ".jpg");
@@ -266,7 +296,8 @@ public class FragmentMenu02 extends Fragment {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 progressDialog.dismiss();
-                Toast.makeText(getContext(), "Information Saved!", Toast.LENGTH_SHORT).show();
+                isImageChanges = false;
+                Toast.makeText(getContext(), "Your information already updated!", Toast.LENGTH_SHORT).show();
 
                 // redirect to home
                 // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.

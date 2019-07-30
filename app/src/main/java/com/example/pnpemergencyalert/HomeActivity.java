@@ -108,7 +108,7 @@ public class HomeActivity extends AppCompatActivity
                 } else if(information.getType().equals("S")){
                     textViewSideMenuType.setText("SUPERVISOR");
                 }
-                Glide.with(HomeActivity.this)
+                Glide.with(getApplicationContext())
                     .load(information.getImageUrl())
                     .into(imageViewSideMenuProfile);
             }
