@@ -104,9 +104,9 @@ public class HomeActivity extends AppCompatActivity
                 if(information.getType().equals("C")){
                     textViewSideMenuType.setText("Citizen");
                 } else if(information.getType().equals("A")){
-                    textViewSideMenuType.setText("Administrator");
-                } else if(information.getType().equals("S")){
-                    textViewSideMenuType.setText("SUPERVISOR");
+                    textViewSideMenuType.setText("ADMINISTRATOR");
+                } else if(information.getType().equals("P")){
+                    textViewSideMenuType.setText("Police Officer");
                 }
                 Glide.with(getApplicationContext())
                     .load(information.getImageUrl())

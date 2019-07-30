@@ -51,7 +51,7 @@
                     android:hint="@string/login_email_hint"
                     android:inputType="textEmailAddress"
                     android:maxLines="1"
-                    android:text="test@gmail.com" />
+                    android:text="pnpemergencyalertapp@gmail.com" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -65,7 +65,7 @@
                     android:hint="@string/login_password_hint"
                     android:inputType="textPassword"
                     android:maxLines="1"
-                    android:text="asd123asd123" />
+                    android:text="adminPnP1" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <!--<TextView-->

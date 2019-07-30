@@ -144,14 +144,6 @@ public class FragmentMenu02 extends Fragment {
                             .load(information.getImageUrl())
                             .into(imageViewProfile);
                 }
-                textViewSideMenuName.setText(information.getName());
-                if(information.getType().equals("C")){
-                    textViewSideMenuType.setText("Citizen");
-                } else if(information.getType().equals("A")){
-                    textViewSideMenuType.setText("Administrator");
-                } else if(information.getType().equals("S")){
-                    textViewSideMenuType.setText("SUPERVISOR");
-                }
                 imageURL = information.getImageUrl();
             }
 
