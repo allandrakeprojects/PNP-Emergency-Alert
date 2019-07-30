@@ -1,27 +1,47 @@
 package com.example.pnpemergencyalert;
 
+import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.Bundle;
-
-import androidx.core.view.GravityCompat;
-import androidx.appcompat.app.ActionBarDrawerToggle;
-
-import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.Spinner;
+import android.widget.TextView;
 
-import com.google.android.material.navigation.NavigationView;
-
-import androidx.drawerlayout.widget.DrawerLayout;
-
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
-import android.view.Menu;
-import android.widget.Toast;
+import com.bumptech.glide.Glide;
+import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class HomeActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+
+    public EditText editTextProfileFullName, editTextProfileAddress, editTextProfileEmail, editTextProfilePassword;
+    public ImageView imageViewProfile, imageViewSideMenuProfile;
+    public Button buttonUpdate;
+    public Spinner spinnerProfileGender;
+    public ProgressDialog progressDialog;
+    public TextView textViewSideMenuName, textViewSideMenuType;
+
+    private FirebaseAuth firebaseAuth;
+    private FirebaseDatabase firebaseDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +66,58 @@ public class HomeActivity extends AppCompatActivity
         toggle.syncState();
         navigationView.setNavigationItemSelectedListener(this);
         displaySelectedScreen(2131296378);
+        View headerView = navigationView.getHeaderView(0);
+
+//        Spinner spinner = findViewById(R.id.spinnerProfileGender);
+//        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+//                R.array.numbers, android.R.layout.simple_spinner_item);
+//        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+//        spinner.setAdapter(adapter);
+
+        spinnerProfileGender = (Spinner)findViewById(R.id.spinnerProfileGender);
+        editTextProfileFullName = (EditText)findViewById(R.id.editTextProfileFullName);
+        editTextProfileAddress = (EditText)findViewById(R.id.editTextProfileAddress);
+        editTextProfileEmail = (EditText)findViewById(R.id.editTextProfileEmail);
+        editTextProfilePassword = (EditText)findViewById(R.id.editTextProfilePassword);
+        imageViewProfile = (ImageView)findViewById(R.id.imageViewProfile);
+        buttonUpdate = (Button)findViewById(R.id.buttonUpdate);
+        textViewSideMenuName = (TextView)headerView.findViewById(R.id.textViewSideMenuName);
+        textViewSideMenuType = (TextView)headerView.findViewById(R.id.textViewSideMenuType);
+        imageViewSideMenuProfile = (ImageView)headerView.findViewById(R.id.imageViewSideMenuProfile);
+
+
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Getting info...");
+        progressDialog.setCanceledOnTouchOutside(false);
+        progressDialog.show();
+
+        firebaseAuth = FirebaseAuth.getInstance();
+        firebaseDatabase = firebaseDatabase.getInstance();
+
+        DatabaseReference databaseReference = firebaseDatabase.getReference("Users/" + firebaseAuth.getUid());
+        databaseReference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                progressDialog.dismiss();
+                Information information = dataSnapshot.getValue(Information.class);
+                textViewSideMenuName.setText(information.getName());
+                if(information.getType().equals("C")){
+                    textViewSideMenuType.setText("Citizen");
+                } else if(information.getType().equals("A")){
+                    textViewSideMenuType.setText("Administrator");
+                } else if(information.getType().equals("S")){
+                    textViewSideMenuType.setText("SUPERVISOR");
+                }
+                Glide.with(HomeActivity.this)
+                    .load(information.getImageUrl())
+                    .into(imageViewSideMenuProfile);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
     }
 
     @Override
@@ -96,7 +168,9 @@ public class HomeActivity extends AppCompatActivity
 //
 //        }
         if (id == R.id.nav_signout) {
-
+            firebaseAuth.signOut();
+            finish();
+            startActivity(new Intent(HomeActivity.this, LoginActivity.class));
         }
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);

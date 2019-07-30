@@ -64,7 +64,6 @@ import java.util.List;
 
 public class RegisterActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
-    //Widgets
     private EditText editTextFullName, editTextAddress, editTextEmail, editTextPassword;
     private Spinner spinnerGender;
     private Button buttonRegister;
@@ -112,6 +111,12 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
 
         buttonPicture = (RelativeLayout) findViewById(R.id.picture);
         imageViewProfile = (ImageView) findViewById(R.id.imageViewProfile);
+
+//        FirebaseUser user = firebaseAuth.getCurrentUser();
+//        if(user != null){
+//            finish();
+//            startActivity(new Intent(this, HomeActivity.class));
+//        }
 
         buttonPicture.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -318,6 +323,7 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
                 }
 
                 progressDialog.setMessage("Registering User...");
+                progressDialog.setCanceledOnTouchOutside(false);
                 progressDialog.show();
 
                 final String finalName = gender;

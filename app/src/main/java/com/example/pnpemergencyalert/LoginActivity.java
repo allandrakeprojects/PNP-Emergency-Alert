@@ -85,15 +85,16 @@ public class LoginActivity extends AppCompatActivity {
                 firebaseAuth.signInWithEmailAndPassword(email,pass).addOnCompleteListener(LoginActivity.this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
-                        progressDialog.dismiss();
-                        if (task.isSuccessful()) {
-                            // redirect to home
-                            startActivity(new Intent(LoginActivity.this, HomeActivity.class));
-                        }
-                        else{
-                            Toast.makeText(LoginActivity.this, "Email or Password didn't match", Toast.LENGTH_SHORT).show();
-                            return;
-                        }
+                    progressDialog.dismiss();
+                    if (task.isSuccessful()) {
+                        // redirect to home
+                        finish();
+                        startActivity(new Intent(LoginActivity.this, HomeActivity.class));
+                    }
+                    else{
+                        Toast.makeText(LoginActivity.this, "Email or Password didn't match", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
                     }
                 });
             }
