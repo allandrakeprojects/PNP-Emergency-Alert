@@ -430,7 +430,7 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
                 contentURI = data.getData();
                 try {
                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), contentURI);
-                    String path = saveImage(bitmap);
+//                    String path = saveImage(bitmap);
                     imageViewProfile.setTag("changesImage");
 //                    Toast.makeText(RegisterActivity.this, "Image Saved!", Toast.LENGTH_SHORT).show();
                     imageViewProfile.setImageBitmap(bitmap);
