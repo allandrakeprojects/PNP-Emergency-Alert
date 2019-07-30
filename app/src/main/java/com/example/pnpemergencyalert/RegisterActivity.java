@@ -75,7 +75,6 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
     private static final String IMAGE_DIRECTORY = "/PNP Emergency Alert";
     private Uri contentURI;
 
-
     //Firebase
     private FirebaseAuth firebaseAuth;
     private StorageReference storageReference;
@@ -114,14 +113,14 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
         buttonPicture = (RelativeLayout) findViewById(R.id.picture);
         imageViewProfile = (ImageView) findViewById(R.id.imageViewProfile);
 
-        INIT();
-
         buttonPicture.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 showPictureDialog();
             }
         });
+
+        INIT();
     }
 
     private String getFileExtension(Uri uri) {
@@ -151,6 +150,8 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 progressDialog.dismiss();
                 Toast.makeText(RegisterActivity.this, "Information Saved!", Toast.LENGTH_SHORT).show();
+
+                // redirect to home
                 // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
                 // ...
             }
@@ -191,7 +192,7 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
                         gender = "";
                     }
 
-                    Information information = new Information(fullName, address, email, gender, downloadUri.toString());
+                    Information information = new Information(fullName, address, email, gender, downloadUri.toString(), "C");
                     FirebaseUser user = firebaseAuth.getCurrentUser();
                     databaseReference.child("Users").child(user.getUid()).setValue(information);
                 } else {
@@ -335,7 +336,8 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
 //                            sendEmailVerification();
                         }
                         else{
-                            Toast.makeText(RegisterActivity.this, "Error " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                            progressDialog.dismiss();
+                            Toast.makeText(RegisterActivity.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                         }
 
                     }
