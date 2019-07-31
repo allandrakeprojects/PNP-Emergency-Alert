@@ -154,7 +154,7 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 progressDialog.dismiss();
-                Toast.makeText(RegisterActivity.this, "Information Saved!", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(RegisterActivity.this, "Information Saved!", Toast.LENGTH_SHORT).show();
 
                 // redirect to home
                 // taskSnapshot.getMetadata() contains file metadata such as size, content-type, etc.
@@ -189,6 +189,7 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
                     String fullName = editTextFullName.getText().toString().trim();
                     String address = editTextAddress.getText().toString().trim();
                     String email = editTextEmail.getText().toString().trim();
+                    String pass = editTextPassword.getText().toString().trim();
                     String gender;
 
                     try {
@@ -200,6 +201,26 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
                     Information information = new Information(fullName, address, email, gender, downloadUri.toString(), "C");
                     FirebaseUser user = firebaseAuth.getCurrentUser();
                     databaseReference.child("Users").child(user.getUid()).setValue(information);
+
+                    progressDialog.setMessage("Logging in...");
+                    progressDialog.setCanceledOnTouchOutside(false);
+                    progressDialog.show();
+
+                    firebaseAuth.signInWithEmailAndPassword(email,pass).addOnCompleteListener(RegisterActivity.this, new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            progressDialog.dismiss();
+                            if (task.isSuccessful()) {
+                                // redirect to home
+                                finish();
+                                startActivity(new Intent(RegisterActivity.this, HomeActivity.class));
+                            }
+                            else{
+                                Toast.makeText(RegisterActivity.this, "Email or Password didn't match", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+                        }
+                    });
                 } else {
                     // Handle failures
                     // ...
@@ -322,32 +343,50 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
                     return;
                 }
 
-                progressDialog.setMessage("Registering User...");
-                progressDialog.setCanceledOnTouchOutside(false);
-                progressDialog.show();
-
-                final String finalName = gender;
-                firebaseAuth.createUserWithEmailAndPassword(email,pass).addOnCompleteListener(RegisterActivity.this, new OnCompleteListener<AuthResult>() {
+                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
                     @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            saveUser();
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch (which){
+                            case DialogInterface.BUTTON_NEGATIVE:
+                                progressDialog.setMessage("Registering User...");
+                                progressDialog.setCanceledOnTouchOutside(false);
+                                progressDialog.show();
+
+                                String email = editTextEmail.getText().toString().trim();
+                                String pass = editTextPassword.getText().toString().trim();
+
+                                firebaseAuth.createUserWithEmailAndPassword(email,pass).addOnCompleteListener(RegisterActivity.this, new OnCompleteListener<AuthResult>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<AuthResult> task) {
+                                        if (task.isSuccessful()) {
+                                            saveUser();
 //                            Toast.makeText(RegisterActivity.this, "Success", Toast.LENGTH_SHORT).show();
 //                            mDatabase = FirebaseDatabase.getInstance().getReference();
 //                            Firebase.setAndroidContext(UserSignUp.this);
 //                            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 //                            String uid = user.getUid();
 //                            writeNewUser(uid, finalName);
-                            //NEW
+                                            //NEW
 //                            sendEmailVerification();
-                        }
-                        else{
-                            progressDialog.dismiss();
-                            Toast.makeText(RegisterActivity.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
-                        }
+                                        }
+                                        else{
+                                            progressDialog.dismiss();
+                                            Toast.makeText(RegisterActivity.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                        }
 
+                                    }
+                                });
+                                break;
+                            case DialogInterface.BUTTON_POSITIVE:
+                                //No button clicked
+                                break;
+                        }
                     }
-                });
+                };
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(RegisterActivity.this);
+                builder.setMessage("Is all information correct?").setPositiveButton("Wait", dialogClickListener)
+                        .setNegativeButton("Continue", dialogClickListener).show();
             }
         });
     }
@@ -431,9 +470,9 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
                 try {
                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), contentURI);
 //                    String path = saveImage(bitmap);
-                    imageViewProfile.setTag("changesImage");
 //                    Toast.makeText(RegisterActivity.this, "Image Saved!", Toast.LENGTH_SHORT).show();
                     imageViewProfile.setImageBitmap(bitmap);
+                    imageViewProfile.setTag("changesImage");
 
                 } catch (IOException e) {
                     e.printStackTrace();

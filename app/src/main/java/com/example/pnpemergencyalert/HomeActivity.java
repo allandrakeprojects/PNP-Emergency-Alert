@@ -130,6 +130,7 @@ public class HomeActivity extends AppCompatActivity
                     nav_Menu.findItem(R.id.nav_profile_settings).setVisible(false);
                     nav_Menu.findItem(R.id.nav_alert).setVisible(true);
                     nav_Menu.findItem(R.id.nav_history).setVisible(true);
+                    nav_Menu.findItem(R.id.nav_profile_settings).setVisible(true);
                     nav_Menu.findItem(R.id.nav_police_officer).setVisible(false);
                 }
                 Glide.with(getApplicationContext())

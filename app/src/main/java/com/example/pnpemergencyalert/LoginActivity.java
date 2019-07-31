@@ -80,6 +80,7 @@ public class LoginActivity extends AppCompatActivity {
                 }
 
                 progressDialog.setMessage("Logging in...");
+                progressDialog.setCanceledOnTouchOutside(false);
                 progressDialog.show();
 
                 firebaseAuth.signInWithEmailAndPassword(email,pass).addOnCompleteListener(LoginActivity.this, new OnCompleteListener<AuthResult>() {

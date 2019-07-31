@@ -14,7 +14,7 @@
             android:visible="false" />
         <item
             android:id="@+id/nav_police_officer"
-            android:title="Police Office"
+            android:title="Add Police Office"
             android:visible="false" />
         <item
             android:id="@+id/nav_send_alert"

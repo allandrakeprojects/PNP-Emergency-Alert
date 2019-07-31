@@ -10,6 +10,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -39,6 +40,7 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -68,6 +70,7 @@ public class FragmentMenu02 extends Fragment {
     private int GALLERY = 1, CAMERA = 2;
     private static final String IMAGE_DIRECTORY = "/PNP Emergency Alert";
     private String imageURL = "";
+    private String type = "";
     private boolean isImageChanges = false;
     public TextView textViewSideMenuName, textViewSideMenuType;
 
@@ -145,6 +148,11 @@ public class FragmentMenu02 extends Fragment {
                             .into(imageViewProfile);
                 }
                 imageURL = information.getImageUrl();
+                if(information.getType() == "C"){
+                    type = "C";
+                } else{
+                    type = "P";
+                }
             }
 
             @Override
@@ -207,35 +215,51 @@ public class FragmentMenu02 extends Fragment {
                     return;
                 }
 
-                progressDialog.setMessage("Updating your profile...");
-                progressDialog.setCanceledOnTouchOutside(false);
-                progressDialog.show();
+                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch (which){
+                            case DialogInterface.BUTTON_NEGATIVE:
+                                progressDialog.setMessage("Updating your profile...");
+                                progressDialog.setCanceledOnTouchOutside(false);
+                                progressDialog.show();
 
-                if(isImageChanges){
-                    uploadFile();
-                    changePassword();
-                } else{
-                    Handler handler = new Handler();
-                    handler.postDelayed(new Runnable() {
-                        public void run() {
-                            progressDialog.dismiss();
-                            String fullName = editTextProfileFullName.getText().toString().trim();
-                            String address = editTextProfileAddress.getText().toString().trim();
-                            String email = editTextProfileEmail.getText().toString().trim();
-                            String pass = editTextProfilePassword.getText().toString().trim();
-                            String gender;
-                            try {
-                                gender = spinnerProfileGender.getSelectedItem().toString();
-                            } catch(Exception n){
-                                gender = "";
-                            }
-                            Information information = new Information(fullName, address, email, gender, imageURL, "C");
-                            databaseReference.setValue(information);
-                            changePassword();
-                            Toast.makeText(getContext(), "Your information already updated!", Toast.LENGTH_SHORT).show();
+                                if(isImageChanges){
+                                    uploadFile();
+                                    changePassword();
+                                } else{
+                                    Handler handler = new Handler();
+                                    handler.postDelayed(new Runnable() {
+                                        public void run() {
+                                            progressDialog.dismiss();
+                                            String fullName = editTextProfileFullName.getText().toString().trim();
+                                            String address = editTextProfileAddress.getText().toString().trim();
+                                            String email = editTextProfileEmail.getText().toString().trim();
+                                            String pass = editTextProfilePassword.getText().toString().trim();
+                                            String gender;
+                                            try {
+                                                gender = spinnerProfileGender.getSelectedItem().toString();
+                                            } catch(Exception n){
+                                                gender = "";
+                                            }
+                                            Information information = new Information(fullName, address, email, gender, imageURL, type);
+                                            databaseReference.setValue(information);
+                                            changePassword();
+                                            Toast.makeText(getContext(), "Your information already updated!", Toast.LENGTH_SHORT).show();
+                                        }
+                                    }, 3000);
+                                }
+                                break;
+                            case DialogInterface.BUTTON_POSITIVE:
+                                //No button clicked
+                                break;
                         }
-                    }, 3000);
-                }
+                    }
+                };
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                builder.setMessage("Is all information correct?").setPositiveButton("Wait", dialogClickListener)
+                        .setNegativeButton("Continue", dialogClickListener).show();
             }
         });
     }
@@ -332,7 +356,7 @@ public class FragmentMenu02 extends Fragment {
                         gender = "";
                     }
 
-                    Information information = new Information(fullName, address, email, gender, downloadUri.toString(), "C");
+                    Information information = new Information(fullName, address, email, gender, downloadUri.toString(), type);
                     FirebaseUser user = firebaseAuth.getCurrentUser();
                     databaseReference.child("Users").child(user.getUid()).setValue(information);
                 } else {
