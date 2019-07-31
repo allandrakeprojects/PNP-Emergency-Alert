@@ -32,17 +32,13 @@
                     android:layout_centerHorizontal="true"/>
 
                 <com.mikhaellopez.circularimageview.CircularImageView
-                    android:id="@+id/imageViewPolicePlus"
+                    android:id="@+id/imageViewPlus"
                     android:layout_width="@dimen/ic_plus_width"
                     android:layout_height="@dimen/ic_plus_width"
-                    android:layout_alignEnd="@+id/imageViewProfile"
-                    android:layout_alignBottom="@id/imageViewPoliceProfile"
-                    android:layout_alignParentStart="true"
-                    android:layout_marginStart="196dp"
-                    android:layout_marginLeft="5dp"
-                    android:layout_marginTop="5dp"
-                    android:layout_marginEnd="9dp"
-                    android:layout_marginBottom="0dp"
+                    android:layout_alignEnd="@+id/imageViewPoliceProfile"
+                    android:layout_alignBottom="@+id/imageViewPoliceProfile"
+                    android:layout_marginEnd="6dp"
+                    android:layout_marginBottom="4dp"
                     android:src="@drawable/ic_plus"
                     app:civ_shadow="true"
                     app:civ_shadow_radius="1" />
