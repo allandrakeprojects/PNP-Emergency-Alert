@@ -1,8 +1,14 @@
 package com.example.pnpemergencyalert;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -59,6 +65,9 @@ public class HomeActivity extends AppCompatActivity
 //                        .setAction("Action", null).show();
 //            }
 //        });
+
+        createNetErrorDialog();
+
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         final NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.getMenu().getItem(0).setChecked(true);
@@ -240,5 +249,40 @@ public class HomeActivity extends AppCompatActivity
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
+    }
+
+
+
+    protected void createNetErrorDialog() {
+
+        ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        if(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() == NetworkInfo.State.CONNECTED ||
+                connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() == NetworkInfo.State.CONNECTED) {
+            //we are connected to a network
+        }
+        else{
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("You need internet connection for this app. Please turn on mobile network or Wi-Fi in Settings.")
+                    .setTitle("Unable to connect")
+                    .setCancelable(false)
+                    .setPositiveButton("Settings",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    Intent i = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
+                                    startActivity(i);
+                                }
+                            }
+                    )
+                    .setNegativeButton("Cancel",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    HomeActivity.this.finish();
+                                }
+                            }
+                    );
+            AlertDialog alert = builder.create();
+            alert.show();
+        }
     }
 }

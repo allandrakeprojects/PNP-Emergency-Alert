@@ -1,18 +1,18 @@
 package com.example.pnpemergencyalert;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -23,23 +23,31 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.bumptech.glide.Glide;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.StorageReference;
+import com.firebase.client.Firebase;
 
-import java.util.ArrayList;
-import java.util.concurrent.Executor;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import pl.droidsonroids.gif.GifImageView;
-
-import static android.content.ContentValues.TAG;
 
 public class FragmentMenu01 extends Fragment {
 
@@ -65,6 +73,12 @@ public class FragmentMenu01 extends Fragment {
     String activeUser;
     String color;
 
+    //Firebase
+    private FirebaseAuth firebaseAuth;
+    private FirebaseDatabase firebaseDatabase;
+    private StorageReference storageReference;
+    private DatabaseReference databaseReference;
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -72,16 +86,27 @@ public class FragmentMenu01 extends Fragment {
         //returning our layout file
         //change R.layout.yourlayoutfilename for each of your fragments
         View view = inflater.inflate(R.layout.fragment_menu_01, container, false);
+
+        //Firebase
+        Firebase.setAndroidContext(getActivity().getApplicationContext());
+        firebaseAuth = FirebaseAuth.getInstance();
+        firebaseDatabase = FirebaseDatabase.getInstance();
+        databaseReference = firebaseDatabase.getReference();
+
         init(view);
         return view;
     }
 
 
     private void init(View view){
+
         imageViewAlert = (ImageView)view.findViewById(R.id.imageViewAlert);
+        imageViewProfile = (ImageView)view.findViewById(R.id.imageViewProfile);
         gifAlert = (GifImageView)view.findViewById(R.id.gifAlert);
         cardViewInfo = (CardView) view.findViewById(R.id.cardViewInfo);
         cardViewAlert = (CardView) view.findViewById(R.id.cardViewAlert);
+        textViewName = (TextView) view.findViewById(R.id.textViewName);
+        textViewStatus = (TextView) view.findViewById(R.id.textViewStatus);
 
         imageViewAlert.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -96,7 +121,6 @@ public class FragmentMenu01 extends Fragment {
 
                                 getLocationPermission();
                                 getDeviceLocation();
-
                                 break;
                             case DialogInterface.BUTTON_POSITIVE:
                                 //No button clicked
@@ -110,6 +134,87 @@ public class FragmentMenu01 extends Fragment {
                         .setNegativeButton("Yes", dialogClickListener).show();
             }
         });
+
+        final DatabaseReference databaseReference = firebaseDatabase.getReference("Alerts/" + firebaseAuth.getUid());
+        databaseReference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                Alerts alerts = dataSnapshot.getValue(Alerts.class);
+                try{
+                    cardViewAlert.setVisibility(View.INVISIBLE);
+                    cardViewInfo.setVisibility(View.VISIBLE);
+
+                    if(alerts.getStatus().equals("P")){
+                        textViewStatus.setText("Status: Waiting");
+                    } else if(alerts.getStatus().equals("C")){
+                        textViewStatus.setText("Status: On the way");
+                        if(!alerts.getRead_ontheway()){
+                            NotificationCompat.Builder b = new NotificationCompat.Builder(getActivity().getApplicationContext());
+                            b.setAutoCancel(true)
+                                    .setDefaults(NotificationCompat.DEFAULT_ALL)
+                                    .setWhen(System.currentTimeMillis())
+                                    .setSmallIcon(R.drawable.baseline_account_circle_black_48)
+                                    .setTicker("PNP Emergency Alert")
+                                    .setContentTitle("PNP Emergency Alert")
+                                    .setContentText("Our police officer is on the way now.");
+                            NotificationManager nm = (NotificationManager) getActivity().getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+                            nm.notify(1, b.build());
+
+                            Alerts alerts_ = new Alerts(alerts.getPolice_uid(), alerts.getLat(), alerts.getLng(), alerts.getDatetime(), alerts.getStatus(), true);
+                            databaseReference.setValue(alerts_);
+                            alerts.setRead_ontheway(true);
+                        }
+                    } else if(alerts.getStatus().equals("D")){
+                        cardViewAlert.setVisibility(View.VISIBLE);
+                        cardViewInfo.setVisibility(View.INVISIBLE);
+
+                        textViewName.setText("");
+                        textViewStatus.setText("");
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            imageViewProfile.setImageDrawable(getResources().getDrawable(R.drawable.baseline_account_circle_black_48, getActivity().getApplicationContext().getTheme()));
+                        } else {
+                            imageViewProfile.setImageDrawable(getResources().getDrawable(R.drawable.baseline_account_circle_black_48));
+                        }
+                    }
+
+                    // Get police officer if exists yet
+                    try{
+                        String police_uid = alerts.getPolice_uid();
+                        if(!police_uid.equals("-")){
+                            DatabaseReference databaseReference = firebaseDatabase.getReference("Users/" + police_uid);
+                            databaseReference.addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                    Information information = dataSnapshot.getValue(Information.class);
+                                    textViewName.setText("Police Officer: " + information.getName());
+                                    final Context context = getContext();
+                                    Glide.with(context)
+                                            .load(information.getImageUrl())
+                                            .into(imageViewProfile);
+                                }
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                }
+                            });
+                        }
+                    } catch (Exception err){
+
+                    }
+                } catch (Exception err){
+                    cardViewAlert.setVisibility(View.VISIBLE);
+                    cardViewInfo.setVisibility(View.INVISIBLE);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+
     }
 
     @Override
@@ -227,7 +332,20 @@ public class FragmentMenu01 extends Fragment {
                             Location currentLocation = (Location) task.getResult();
                             latLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
                             Log.d("testtesttest", "Current location: http://www.google.com/maps/place/"+latLng.latitude+","+latLng.longitude);
-                            Toast.makeText(getActivity(), "Current location: http://www.google.com/maps/place/"+latLng.latitude+","+latLng.longitude, Toast.LENGTH_SHORT).show();
+
+                            Date today = new Date();
+                            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss a");
+                            String dateToStr = format.format(today);
+
+                            dateToStr = dateToStr.replace(" ","");
+                            dateToStr = dateToStr.replace(":","");
+                            dateToStr = dateToStr.replace("-","");
+                            dateToStr = dateToStr.substring(0,12);
+
+                            FirebaseUser user = firebaseAuth.getCurrentUser();
+                            Alerts alerts = new Alerts("-", latLng.latitude + "", latLng.longitude + "", Long.parseLong(dateToStr), "P", false);
+                            String id = databaseReference.child("Alerts").push().getKey();
+                            databaseReference.child("Alerts").child(user.getUid()).setValue(alerts);
 
                         } else {
                             Log.d(TAG, "onComplete: current location is null");
