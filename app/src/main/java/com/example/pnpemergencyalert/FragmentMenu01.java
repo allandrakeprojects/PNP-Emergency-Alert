@@ -1,22 +1,45 @@
 package com.example.pnpemergencyalert;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+
+import java.util.ArrayList;
+import java.util.concurrent.Executor;
 
 import pl.droidsonroids.gif.GifImageView;
+
+import static android.content.ContentValues.TAG;
 
 public class FragmentMenu01 extends Fragment {
 
@@ -25,10 +48,27 @@ public class FragmentMenu01 extends Fragment {
     private CardView cardViewInfo, cardViewAlert;
     private TextView textViewName, textViewStatus;
 
+    private FusedLocationProviderClient mFusedLocationProviderClient;
+
+    private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
+    private static final String COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
+
+    private Boolean mLocationPermissionGranted = false;
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
+
+    public static LatLng latLng;
+    private static final String TAG = "testtesttest";
+    Cursor cursorMsg, cursorDtl;
+    String name;
+    public static String message;
+    public static final int RequestPermissionCode  = 1 ;
+    String activeUser;
+    String color;
 
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
         //returning our layout file
         //change R.layout.yourlayoutfilename for each of your fragments
         View view = inflater.inflate(R.layout.fragment_menu_01, container, false);
@@ -53,6 +93,10 @@ public class FragmentMenu01 extends Fragment {
                             case DialogInterface.BUTTON_NEGATIVE:
                                 cardViewAlert.setVisibility(View.INVISIBLE);
                                 cardViewInfo.setVisibility(View.VISIBLE);
+
+                                getLocationPermission();
+                                getDeviceLocation();
+
                                 break;
                             case DialogInterface.BUTTON_POSITIVE:
                                 //No button clicked
@@ -62,7 +106,7 @@ public class FragmentMenu01 extends Fragment {
                 };
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
-                builder.setMessage("Send Alert to PNP?").setPositiveButton("No", dialogClickListener)
+                builder.setMessage("Confirm that you're in danger?").setPositiveButton("Cancel", dialogClickListener)
                         .setNegativeButton("Yes", dialogClickListener).show();
             }
         });
@@ -74,4 +118,207 @@ public class FragmentMenu01 extends Fragment {
         //you can set the title for your toolbar here for different fragments different titles
 //        getActivity().setTitle("Menu 1");
     }
+
+
+
+
+
+
+
+
+
+
+
+
+//    private void fetchLocation() {
+//
+//
+//        if (ContextCompat.checkSelfPermission(getContext(),
+//                Manifest.permission.ACCESS_COARSE_LOCATION)
+//                != PackageManager.PERMISSION_GRANTED) {
+//
+//            Toast.makeText(getContext(), "dasdasdasdasdas1", Toast.LENGTH_SHORT).show();
+//            // Permission is not granted
+//            // Should we show an explanation?
+//            if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
+//                    Manifest.permission.ACCESS_COARSE_LOCATION)) {
+//                // Show an explanation to the user *asynchronously* -- don't block
+//                // this thread waiting for the user's response! After the user
+//                // sees the explanation, try again to request the permission.
+//
+//                new AlertDialog.Builder(getContext())
+//                        .setTitle("Required Location Permission")
+//                        .setMessage("You have to give this permission to acess this feature")
+//                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+//                            @Override
+//                            public void onClick(DialogInterface dialogInterface, int i) {
+//                                ActivityCompat.requestPermissions(getActivity(),
+//                                        new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+//                                        MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
+//                            }
+//                        })
+//                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+//                            @Override
+//                            public void onClick(DialogInterface dialogInterface, int i) {
+//                                dialogInterface.dismiss();
+//                            }
+//                        })
+//                        .create()
+//                        .show();
+//
+//
+//            } else {
+//                // No explanation needed; request the permission
+//                ActivityCompat.requestPermissions(getActivity(),
+//                        new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+//                        MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
+//
+//                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+//                // app-defined int constant. The callback method gets the
+//                // result of the request.
+//            }
+//        } else {
+//            Toast.makeText(getContext(), "dasdasdasdasdas2", Toast.LENGTH_SHORT).show();
+//            // Permission has already been granted
+//            mFusedLocationClient.getLastLocation()
+//            .addOnSuccessListener(getActivity(), new OnSuccessListener<Location>() {
+//                @Override
+//                public void onSuccess(Location location) {
+//                    // Got last known location. In some rare situations this can be null.
+//                    if (location != null) {
+//                        // Logic to handle location object
+//                        Double latitude = location.getLatitude();
+//                        Double longitude = location.getLongitude();
+//                        Log.d("testttestttest", "Latitude = "+latitude + "\nLongitude = " + longitude);
+//
+//                    } else{
+//                        Log.d("testttestttest", "Latitude =");
+//                    }
+//                }
+//            })
+//            .addOnFailureListener(getActivity(), new OnFailureListener() {
+//                @Override
+//                public void onFailure(@NonNull Exception e) {
+//                    Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+//                }
+//            });
+//        }
+//    }
+
+
+
+
+
+
+
+
+    private void getDeviceLocation(){
+        Log.d(TAG, "getDeviceLocation: getting the device location");
+        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
+
+        try{
+            if(mLocationPermissionGranted) {
+                Task location = mFusedLocationProviderClient.getLastLocation();
+                location.addOnCompleteListener(new OnCompleteListener() {
+                    @Override
+                    public void onComplete(@NonNull Task task) {
+                        if (task.isSuccessful()) {
+                            Log.d(TAG, "onComplete: found location");
+                            Location currentLocation = (Location) task.getResult();
+                            latLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+                            Log.d("testtesttest", "Current location: http://www.google.com/maps/place/"+latLng.latitude+","+latLng.longitude);
+                            Toast.makeText(getActivity(), "Current location: http://www.google.com/maps/place/"+latLng.latitude+","+latLng.longitude, Toast.LENGTH_SHORT).show();
+
+                        } else {
+                            Log.d(TAG, "onComplete: current location is null");
+                            Toast.makeText(getActivity(), "Unable to get current location", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                })
+                ;
+            }
+        } catch (SecurityException e){
+            Log.e(TAG, "getDeviceLocation: Security Exception: "+e.getMessage());
+        }
+
+    }
+
+    private void getLocationPermission(){
+        Log.d(TAG,"getLocationPermission: getting location permissions");
+        String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION};
+
+        if(ContextCompat.checkSelfPermission(getActivity(),
+                FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+            if(ContextCompat.checkSelfPermission(getActivity().getApplicationContext(),
+                    COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+                mLocationPermissionGranted = true;
+            } else{
+                ActivityCompat.requestPermissions(getActivity(),
+                        permissions,
+                        LOCATION_PERMISSION_REQUEST_CODE);
+            }
+        } else{
+            ActivityCompat.requestPermissions(getActivity(),
+                    permissions,
+                    LOCATION_PERMISSION_REQUEST_CODE);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        Log.d(TAG,"onRequestPermissionsResult: called.");
+        mLocationPermissionGranted = false;
+
+        switch (requestCode){
+            case LOCATION_PERMISSION_REQUEST_CODE:{
+                if(grantResults.length > 0){
+                    for(int i = 0; i < grantResults.length; i++){
+                        if(grantResults[i] != PackageManager.PERMISSION_GRANTED){
+                            mLocationPermissionGranted = false;
+                            Log.d(TAG,"onRequestPermissionsResult: permission failed");
+                            return;
+                        }
+                    }
+                    Log.d(TAG,"onRequestPermissionsResult: permission granted");
+                    mLocationPermissionGranted = true;
+                }
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
