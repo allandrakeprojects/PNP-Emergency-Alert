@@ -165,16 +165,11 @@ public class FragmentMenu01 extends Fragment {
                             alerts.setRead_ontheway(true);
                         }
                     } else if(alerts.getStatus().equals("D")){
+                        textViewName.setText("Police Officer: -");
+                        textViewStatus.setText("Status: -");
+                        imageViewProfile.setImageDrawable(getResources().getDrawable(R.drawable.baseline_account_circle_black_48));
                         cardViewAlert.setVisibility(View.VISIBLE);
                         cardViewInfo.setVisibility(View.INVISIBLE);
-
-                        textViewName.setText("");
-                        textViewStatus.setText("");
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                            imageViewProfile.setImageDrawable(getResources().getDrawable(R.drawable.baseline_account_circle_black_48, getActivity().getApplicationContext().getTheme()));
-                        } else {
-                            imageViewProfile.setImageDrawable(getResources().getDrawable(R.drawable.baseline_account_circle_black_48));
-                        }
                     }
 
                     // Get police officer if exists yet
@@ -198,11 +193,16 @@ public class FragmentMenu01 extends Fragment {
 
                                 }
                             });
+                        } else{
+                            textViewName.setText("Police Officer: -");
+                            imageViewProfile.setImageDrawable(getResources().getDrawable(R.drawable.baseline_account_circle_black_48));
                         }
                     } catch (Exception err){
-
                     }
                 } catch (Exception err){
+                    textViewName.setText("Police Officer: -");
+                    textViewStatus.setText("Status: -");
+                    imageViewProfile.setImageDrawable(getResources().getDrawable(R.drawable.baseline_account_circle_black_48));
                     cardViewAlert.setVisibility(View.VISIBLE);
                     cardViewInfo.setVisibility(View.INVISIBLE);
                 }
