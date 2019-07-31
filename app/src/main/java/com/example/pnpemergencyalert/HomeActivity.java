@@ -40,6 +40,8 @@ public class HomeActivity extends AppCompatActivity
     public ProgressDialog progressDialog;
     public TextView textViewSideMenuName, textViewSideMenuType;
 
+    public Menu menu;
+
     private FirebaseAuth firebaseAuth;
     private FirebaseDatabase firebaseDatabase;
 
@@ -58,7 +60,7 @@ public class HomeActivity extends AppCompatActivity
 //            }
 //        });
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        NavigationView navigationView = findViewById(R.id.nav_view);
+        final NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.getMenu().getItem(0).setChecked(true);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -103,10 +105,32 @@ public class HomeActivity extends AppCompatActivity
                 textViewSideMenuName.setText(information.getName());
                 if(information.getType().equals("C")){
                     textViewSideMenuType.setText("Citizen");
+
+                    Menu nav_Menu = navigationView.getMenu();
+                    nav_Menu.findItem(R.id.nav_send_alert).setVisible(true);
+                    nav_Menu.findItem(R.id.nav_profile_settings).setVisible(true);
+                    nav_Menu.findItem(R.id.nav_alert).setVisible(false);
+                    nav_Menu.findItem(R.id.nav_history).setVisible(false);
+                    nav_Menu.findItem(R.id.nav_police_officer).setVisible(false);
+
                 } else if(information.getType().equals("A")){
                     textViewSideMenuType.setText("ADMINISTRATOR");
+
+                    Menu nav_Menu = navigationView.getMenu();
+                    nav_Menu.findItem(R.id.nav_send_alert).setVisible(false);
+                    nav_Menu.findItem(R.id.nav_profile_settings).setVisible(false);
+                    nav_Menu.findItem(R.id.nav_alert).setVisible(true);
+                    nav_Menu.findItem(R.id.nav_history).setVisible(true);
+                    nav_Menu.findItem(R.id.nav_police_officer).setVisible(true);
                 } else if(information.getType().equals("P")){
                     textViewSideMenuType.setText("Police Officer");
+
+                    Menu nav_Menu = navigationView.getMenu();
+                    nav_Menu.findItem(R.id.nav_send_alert).setVisible(false);
+                    nav_Menu.findItem(R.id.nav_profile_settings).setVisible(false);
+                    nav_Menu.findItem(R.id.nav_alert).setVisible(true);
+                    nav_Menu.findItem(R.id.nav_history).setVisible(true);
+                    nav_Menu.findItem(R.id.nav_police_officer).setVisible(false);
                 }
                 Glide.with(getApplicationContext())
                     .load(information.getImageUrl())
@@ -133,6 +157,7 @@ public class HomeActivity extends AppCompatActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
+        this.menu = menu;
         getMenuInflater().inflate(R.menu.home, menu);
         return true;
     }
@@ -185,18 +210,24 @@ public class HomeActivity extends AppCompatActivity
 
         //initializing the fragment object which is selected
         switch (itemId) {
-            case R.id.nav_alert:
+            case R.id.nav_send_alert:
                 fragment = new FragmentMenu01();
                 break;
-            case R.id.nav_profile_settinngs:
+            case R.id.nav_profile_settings:
                 fragment = new FragmentMenu02();
                 break;
             case R.id.nav_how_to_use:
                 fragment = new FragmentMenu03();
                 break;
-//            case R.id.nav_signout:
-//                fragment = new Menu3();
-//                break;
+            case R.id.nav_alert:
+                fragment = new FragmentMenu04();
+                break;
+            case R.id.nav_history:
+                fragment = new FragmentMenu05();
+                break;
+            case R.id.nav_police_officer:
+                fragment = new FragmentMenu06();
+                break;
         }
 
         //replacing the fragment
