@@ -3,9 +3,12 @@ package com.example.pnpemergencyalert;
 public class Alerts {
 
     public String police_uid;
+    public String police_name;
+    public String name;
+    public String image_url;
     public String lat;
     public String lng;
-    public Long datetime;
+    public String datetime;
     public String status;
     public boolean read_ontheway;
 
@@ -13,8 +16,11 @@ public class Alerts {
 
     }
 
-    public Alerts(String police_uid, String lat, String lng, Long datetime, String status, boolean read_ontheway) {
+    public Alerts(String police_uid, String police_name, String name, String image_url, String lat, String lng, String datetime, String status, boolean read_ontheway) {
         this.police_uid = police_uid;
+        this.police_name = police_name;
+        this.name = name;
+        this.image_url = image_url;
         this.lat = lat;
         this.lng = lng;
         this.datetime = datetime;
@@ -28,6 +34,30 @@ public class Alerts {
 
     public void setPolice_uid(String police_uid) {
         this.police_uid = police_uid;
+    }
+
+    public String getPolice_name() {
+        return police_name;
+    }
+
+    public void setPolice_name(String police_name) {
+        this.police_name = police_name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getImage_url() {
+        return image_url;
+    }
+
+    public void setImage_url(String image_url) {
+        this.image_url = image_url;
     }
 
     public String getLat() {
@@ -46,11 +76,11 @@ public class Alerts {
         this.lng = lng;
     }
 
-    public Long getDatetime() {
+    public String getDatetime() {
         return datetime;
     }
 
-    public void setDatetime(Long datetime) {
+    public void setDatetime(String datetime) {
         this.datetime = datetime;
     }
 

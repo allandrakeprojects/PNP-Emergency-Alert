@@ -68,6 +68,7 @@ public class FragmentMenu01 extends Fragment {
     private static final String TAG = "testtesttest";
     Cursor cursorMsg, cursorDtl;
     String name;
+    String imageUrl;
     public static String message;
     public static final int RequestPermissionCode  = 1 ;
     String activeUser;
@@ -160,9 +161,8 @@ public class FragmentMenu01 extends Fragment {
                             NotificationManager nm = (NotificationManager) getActivity().getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
                             nm.notify(1, b.build());
 
-                            Alerts alerts_ = new Alerts(alerts.getPolice_uid(), alerts.getLat(), alerts.getLng(), alerts.getDatetime(), alerts.getStatus(), true);
+                            Alerts alerts_ = new Alerts(alerts.getPolice_uid(), alerts.getPolice_name(), alerts.getName(), alerts.getImage_url(), alerts.getLat(), alerts.getLng(), alerts.getDatetime(), alerts.getStatus(), true);
                             databaseReference.setValue(alerts_);
-                            alerts.setRead_ontheway(true);
                         }
                     } else if(alerts.getStatus().equals("D")){
                         textViewName.setText("Police Officer: -");
@@ -200,9 +200,9 @@ public class FragmentMenu01 extends Fragment {
                     } catch (Exception err){
                     }
                 } catch (Exception err){
-                    textViewName.setText("Police Officer: -");
-                    textViewStatus.setText("Status: -");
-                    imageViewProfile.setImageDrawable(getResources().getDrawable(R.drawable.baseline_account_circle_black_48));
+//                    textViewName.setText("Police Officer: -");
+//                    textViewStatus.setText("Status: -");
+//                    imageViewProfile.setImageDrawable(getResources().getDrawable(R.drawable.baseline_account_circle_black_48));
                     cardViewAlert.setVisibility(View.VISIBLE);
                     cardViewInfo.setVisibility(View.INVISIBLE);
                 }
@@ -333,32 +333,39 @@ public class FragmentMenu01 extends Fragment {
                             latLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
                             Log.d("testtesttest", "Current location: http://www.google.com/maps/place/"+latLng.latitude+","+latLng.longitude);
 
-                            Date today = new Date();
-                            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss a");
-                            String dateToStr = format.format(today);
-
-                            dateToStr = dateToStr.replace(" ","");
-                            dateToStr = dateToStr.replace(":","");
-                            dateToStr = dateToStr.replace("-","");
-                            dateToStr = dateToStr.substring(0,12);
-
                             FirebaseUser user = firebaseAuth.getCurrentUser();
-                            Alerts alerts = new Alerts("-", latLng.latitude + "", latLng.longitude + "", Long.parseLong(dateToStr), "P", false);
-                            String id = databaseReference.child("Alerts").push().getKey();
-                            databaseReference.child("Alerts").child(user.getUid()).setValue(alerts);
+                            DatabaseReference databaseReference1 = firebaseDatabase.getReference("Users/" + user.getUid());
+                            databaseReference1.addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                    Date today = new Date();
+                                    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss a");
+                                    String dateToStr = format.format(today);
 
+                                    Information information = dataSnapshot.getValue(Information.class);
+                                    FirebaseUser user = firebaseAuth.getCurrentUser();
+                                    Alerts alerts = new Alerts("-", "-", information.getName(), information.getImageUrl(), latLng.latitude + "", latLng.longitude + "", dateToStr, "P", false);
+                                    String id = databaseReference.child("Alerts").push().getKey();
+                                    databaseReference.child("Alerts").child(user.getUid()).setValue(alerts);
+                                }
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                }
+                            });
                         } else {
                             Log.d(TAG, "onComplete: current location is null");
                             Toast.makeText(getActivity(), "Unable to get current location", Toast.LENGTH_SHORT).show();
                         }
                     }
                 })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                            }
+                        })
                 ;
             }
         } catch (SecurityException e){
