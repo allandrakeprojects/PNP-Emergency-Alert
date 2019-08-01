@@ -44,6 +44,12 @@ public class FragmentMenu04 extends Fragment {
                 new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
+                        //creating recyclerview adapter
+                        final Context context = getContext();
+                        AlertsAdapter alertsAdapter = new AlertsAdapter(context, alertsList);
+                        alertsList.clear();
+                        alertsAdapter.notifyDataSetChanged();
+
                         for(com.google.firebase.database.DataSnapshot singleSnapshot : dataSnapshot.getChildren()){
                             String name_uid = singleSnapshot.getKey();
                             String name = singleSnapshot.child("name").getValue(String.class);
@@ -53,25 +59,16 @@ public class FragmentMenu04 extends Fragment {
                             String police_uid = singleSnapshot.child("police_uid").getValue(String.class);
                             String police_name = singleSnapshot.child("police_name").getValue(String.class);
                             String status = singleSnapshot.child("status").getValue(String.class);
-                            String imageUrl = singleSnapshot.child("image_url").getValue(String.class);
+                            String imageUrl = singleSnapshot.child("imageUrl").getValue(String.class);
                             if(status.equals("P")){
                                 status = "Waiting";
                             } else if(status.equals("C")){
                                 status = "On the way";
                             }
 
-                            Log.d("test", police_uid);
-                            Log.d("test", police_name);
-                            Log.d("test", name);
-                            Log.d("test", imageUrl);
-                            Log.d("test", lat);
-                            Log.d("test", lng);
-                            Log.d("test", datetime);
-                            Log.d("test", status);
-                            Log.d("test", "-----------");
-
                             alertsList.add(
                                     new Alerts(
+                                            name_uid,
                                             police_uid,
                                             police_name,
                                             name,
@@ -83,9 +80,6 @@ public class FragmentMenu04 extends Fragment {
                                             false));
                         }
 
-                        //creating recyclerview adapter
-                        final Context context = getContext();
-                        AlertsAdapter alertsAdapter = new AlertsAdapter(getActivity().getApplicationContext(), alertsList);
 
                         //setting adapter to recyclerview
                         recyclerView.setAdapter(alertsAdapter);

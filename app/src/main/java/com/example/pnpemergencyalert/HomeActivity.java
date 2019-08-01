@@ -1,6 +1,7 @@
 package com.example.pnpemergencyalert;
 
 import android.app.AlertDialog;
+import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -22,6 +23,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.NotificationCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
@@ -34,6 +36,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 public class HomeActivity extends AppCompatActivity
@@ -145,6 +148,42 @@ public class HomeActivity extends AppCompatActivity
                 Glide.with(getApplicationContext())
                     .load(information.getImageUrl())
                     .into(imageViewSideMenuProfile);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+        final Query query = FirebaseDatabase.getInstance().getReference().child("Alerts").orderByChild("c_uid");
+        query.equalTo(firebaseAuth.getUid()).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for(DataSnapshot alertSnapshot : dataSnapshot.getChildren()){
+                    String status = alertSnapshot.child("p_status").getValue().toString();
+                    if(!status.equals("D")){
+                        Boolean read = (Boolean) alertSnapshot.child("c_read").getValue();
+                        if(status.equals("O")){
+                            if(!read){
+                                NotificationCompat.Builder b = new NotificationCompat.Builder(getApplicationContext());
+                                b.setAutoCancel(true)
+                                        .setDefaults(NotificationCompat.DEFAULT_ALL)
+                                        .setWhen(System.currentTimeMillis())
+                                        .setSmallIcon(R.drawable.baseline_account_circle_black_48)
+                                        .setTicker("PNP Emergency Alert")
+                                        .setContentTitle("PNP Emergency Alert")
+                                        .setContentText("Our police officer is on the way now.");
+                                NotificationManager nm = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+                                nm.notify(1, b.build());
+
+                                alertSnapshot.getRef().child("c_read").setValue(true);
+                            }
+                        }
+
+                        break;
+                    }
+                }
             }
 
             @Override

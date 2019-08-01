@@ -1,6 +1,7 @@
 package com.example.pnpemergencyalert;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.content.Context;
@@ -40,6 +41,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.StorageReference;
 import com.firebase.client.Firebase;
@@ -87,7 +89,7 @@ public class FragmentMenu01 extends Fragment {
         //returning our layout file
         //change R.layout.yourlayoutfilename for each of your fragments
         View view = inflater.inflate(R.layout.fragment_menu_01, container, false);
-
+        onAttach(getContext());
         //Firebase
         Firebase.setAndroidContext(getActivity().getApplicationContext());
         firebaseAuth = FirebaseAuth.getInstance();
@@ -98,9 +100,7 @@ public class FragmentMenu01 extends Fragment {
         return view;
     }
 
-
     private void init(View view){
-
         imageViewAlert = (ImageView)view.findViewById(R.id.imageViewAlert);
         imageViewProfile = (ImageView)view.findViewById(R.id.imageViewProfile);
         gifAlert = (GifImageView)view.findViewById(R.id.gifAlert);
@@ -136,76 +136,79 @@ public class FragmentMenu01 extends Fragment {
             }
         });
 
-        final DatabaseReference databaseReference = firebaseDatabase.getReference("Alerts/" + firebaseAuth.getUid());
-        databaseReference.addValueEventListener(new ValueEventListener() {
+        final Query query = FirebaseDatabase.getInstance().getReference().child("Alerts").orderByChild("c_uid");
+        query.equalTo(firebaseAuth.getUid()).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                Alerts alerts = dataSnapshot.getValue(Alerts.class);
-                try{
-                    cardViewAlert.setVisibility(View.INVISIBLE);
-                    cardViewInfo.setVisibility(View.VISIBLE);
+                for(DataSnapshot alertSnapshot : dataSnapshot.getChildren()){
+                    String status = alertSnapshot.child("p_status").getValue().toString();
+                    if(!status.equals("D")){
+                        cardViewAlert.setVisibility(View.INVISIBLE);
+                        cardViewInfo.setVisibility(View.VISIBLE);
 
-                    if(alerts.getStatus().equals("P")){
-                        textViewStatus.setText("Status: Waiting");
-                    } else if(alerts.getStatus().equals("C")){
-                        textViewStatus.setText("Status: On the way");
-                        if(!alerts.getRead_ontheway()){
-                            NotificationCompat.Builder b = new NotificationCompat.Builder(getActivity().getApplicationContext());
-                            b.setAutoCancel(true)
-                                    .setDefaults(NotificationCompat.DEFAULT_ALL)
-                                    .setWhen(System.currentTimeMillis())
-                                    .setSmallIcon(R.drawable.baseline_account_circle_black_48)
-                                    .setTicker("PNP Emergency Alert")
-                                    .setContentTitle("PNP Emergency Alert")
-                                    .setContentText("Our police officer is on the way now.");
-                            NotificationManager nm = (NotificationManager) getActivity().getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-                            nm.notify(1, b.build());
+                        Boolean read = (Boolean) alertSnapshot.child("c_read").getValue();
+                        String p_uid = alertSnapshot.child("p_uid").getValue().toString();
 
-                            Alerts alerts_ = new Alerts(alerts.getPolice_uid(), alerts.getPolice_name(), alerts.getName(), alerts.getImageUrl(), alerts.getLat(), alerts.getLng(), alerts.getDatetime(), alerts.getStatus(), true);
-                            databaseReference.setValue(alerts_);
+                        if(status.equals("W")){
+                            textViewStatus.setText("Status: Waiting");
+                        } else if(status.equals("O")){
+                            textViewStatus.setText("Status: On the way");
                         }
-                    } else if(alerts.getStatus().equals("D")){
+
+                        // Get police officer if exists yet
+                        try{
+                            if(!p_uid.equals("-")){
+                                DatabaseReference databaseReference = firebaseDatabase.getReference("Users/" + p_uid);
+                                databaseReference.addValueEventListener(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                        Information information = dataSnapshot.getValue(Information.class);
+                                        textViewName.setText("Police Officer: " + information.getName());
+                                        final Context context = getContext();
+                                        if (isValidContextForGlide(context)) {
+                                            Glide.with(context)
+                                                .load(information.getImageUrl())
+                                                .into(imageViewProfile);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                    }
+                                });
+                            } else{
+                                textViewName.setText("Police Officer: -");
+                                imageViewProfile.setImageResource(R.drawable.baseline_account_circle_black_48);
+                            }
+                        } catch (Exception err){
+                            textViewName.setText("Police Officer: -");
+                            textViewStatus.setText("Status: -");
+                            imageViewProfile.setImageResource(R.drawable.baseline_account_circle_black_48);
+//                            imageViewProfile.setImageDrawable(FragmentMenu01.this.getContext().getDrawable(R.drawable.baseline_account_circle_black_48));
+                            cardViewAlert.setVisibility(View.VISIBLE);
+                            cardViewInfo.setVisibility(View.INVISIBLE);
+                        }
+
+                        break;
+                    } else{
                         textViewName.setText("Police Officer: -");
                         textViewStatus.setText("Status: -");
-                        imageViewProfile.setImageDrawable(getResources().getDrawable(R.drawable.baseline_account_circle_black_48));
+                        imageViewProfile.setImageResource(R.drawable.baseline_account_circle_black_48);
+//                            imageViewProfile.setImageDrawable(FragmentMenu01.this.getContext().getDrawable(R.drawable.baseline_account_circle_black_48));
                         cardViewAlert.setVisibility(View.VISIBLE);
                         cardViewInfo.setVisibility(View.INVISIBLE);
                     }
-
-                    // Get police officer if exists yet
-                    try{
-                        String police_uid = alerts.getPolice_uid();
-                        if(!police_uid.equals("-")){
-                            DatabaseReference databaseReference = firebaseDatabase.getReference("Users/" + police_uid);
-                            databaseReference.addValueEventListener(new ValueEventListener() {
-                                @Override
-                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                    Information information = dataSnapshot.getValue(Information.class);
-                                    textViewName.setText("Police Officer: " + information.getName());
-                                    final Context context = getContext();
-                                    Glide.with(context)
-                                            .load(information.getImageUrl())
-                                            .into(imageViewProfile);
-                                }
-
-                                @Override
-                                public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                                }
-                            });
-                        } else{
-                            textViewName.setText("Police Officer: -");
-                            imageViewProfile.setImageDrawable(getResources().getDrawable(R.drawable.baseline_account_circle_black_48));
-                        }
-                    } catch (Exception err){
-                    }
-                } catch (Exception err){
-//                    textViewName.setText("Police Officer: -");
-//                    textViewStatus.setText("Status: -");
-//                    imageViewProfile.setImageDrawable(getResources().getDrawable(R.drawable.baseline_account_circle_black_48));
-                    cardViewAlert.setVisibility(View.VISIBLE);
-                    cardViewInfo.setVisibility(View.INVISIBLE);
                 }
+
+
+//                } catch (Exception err){
+////                    textViewName.setText("Police Officer: -");
+////                    textViewStatus.setText("Status: -");
+////                    imageViewProfile.setImageDrawable(getResources().getDrawable(R.drawable.baseline_account_circle_black_48));
+//                    cardViewAlert.setVisibility(View.VISIBLE);
+//                    cardViewInfo.setVisibility(View.INVISIBLE);
+//                }
             }
 
             @Override
@@ -215,6 +218,19 @@ public class FragmentMenu01 extends Fragment {
         });
 
 
+    }
+
+    public static boolean isValidContextForGlide(final Context context) {
+        if (context == null) {
+            return false;
+        }
+        if (context instanceof Activity) {
+            final Activity activity = (Activity) context;
+            if (activity.isDestroyed() || activity.isFinishing()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
@@ -330,8 +346,9 @@ public class FragmentMenu01 extends Fragment {
                         if (task.isSuccessful()) {
                             Log.d(TAG, "onComplete: found location");
                             Location currentLocation = (Location) task.getResult();
-                            latLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-                            Log.d("testtesttest", "Current location: http://www.google.com/maps/place/"+latLng.latitude+","+latLng.longitude);
+                            //testing
+//                            latLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+//                            Log.d("testtesttest", "Current location: http://www.google.com/maps/place/"+latLng.latitude+","+latLng.longitude);
 
                             FirebaseUser user = firebaseAuth.getCurrentUser();
                             DatabaseReference databaseReference1 = firebaseDatabase.getReference("Users/" + user.getUid());
@@ -344,9 +361,10 @@ public class FragmentMenu01 extends Fragment {
 
                                     Information information = dataSnapshot.getValue(Information.class);
                                     FirebaseUser user = firebaseAuth.getCurrentUser();
-                                    Alerts alerts = new Alerts("-", "-", information.getName(), information.getImageUrl(), latLng.latitude + "", latLng.longitude + "", dateToStr, "P", false);
+                                    Alerts alerts = new Alerts(user.getUid(), information.getName(), information.getImageUrl(), "lat" + "", "lng" + "", dateToStr, "-", "-", "W", false);
                                     String id = databaseReference.child("Alerts").push().getKey();
-                                    databaseReference.child("Alerts").child(user.getUid()).setValue(alerts);
+                                    String parent_id = databaseReference.child("transaction").push().getKey();
+                                    databaseReference.child("Alerts").child(parent_id).setValue(alerts);
                                 }
 
                                 @Override
