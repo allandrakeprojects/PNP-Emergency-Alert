@@ -5,7 +5,7 @@ public class Alerts {
     public String police_uid;
     public String police_name;
     public String name;
-    public String image_url;
+    public String imageUrl;
     public String lat;
     public String lng;
     public String datetime;
@@ -16,11 +16,11 @@ public class Alerts {
 
     }
 
-    public Alerts(String police_uid, String police_name, String name, String image_url, String lat, String lng, String datetime, String status, boolean read_ontheway) {
+    public Alerts(String police_uid, String police_name, String name, String imageUrl, String lat, String lng, String datetime, String status, boolean read_ontheway) {
         this.police_uid = police_uid;
         this.police_name = police_name;
         this.name = name;
-        this.image_url = image_url;
+        this.imageUrl = imageUrl;
         this.lat = lat;
         this.lng = lng;
         this.datetime = datetime;
@@ -52,12 +52,12 @@ public class Alerts {
         this.name = name;
     }
 
-    public String getImage_url() {
-        return image_url;
+    public String getImageUrl() {
+        return imageUrl;
     }
 
-    public void setImage_url(String image_url) {
-        this.image_url = image_url;
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public String getLat() {

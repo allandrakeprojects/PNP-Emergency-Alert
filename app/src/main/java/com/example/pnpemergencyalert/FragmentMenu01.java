@@ -161,7 +161,7 @@ public class FragmentMenu01 extends Fragment {
                             NotificationManager nm = (NotificationManager) getActivity().getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
                             nm.notify(1, b.build());
 
-                            Alerts alerts_ = new Alerts(alerts.getPolice_uid(), alerts.getPolice_name(), alerts.getName(), alerts.getImage_url(), alerts.getLat(), alerts.getLng(), alerts.getDatetime(), alerts.getStatus(), true);
+                            Alerts alerts_ = new Alerts(alerts.getPolice_uid(), alerts.getPolice_name(), alerts.getName(), alerts.getImageUrl(), alerts.getLat(), alerts.getLng(), alerts.getDatetime(), alerts.getStatus(), true);
                             databaseReference.setValue(alerts_);
                         }
                     } else if(alerts.getStatus().equals("D")){

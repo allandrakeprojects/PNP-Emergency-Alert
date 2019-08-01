@@ -1,6 +1,5 @@
 package com.example.pnpemergencyalert;
 
-import android.app.NotificationManager;
 import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
@@ -8,39 +7,24 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.app.NotificationCompat;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class FragmentMenu04 extends Fragment {
 
-    private FirebaseAuth firebaseAuth;
-    private FirebaseDatabase firebaseDatabase;
-    private StorageReference storageReference;
-    private DatabaseReference databaseReference;
-    private DatabaseReference databaseReferenceUploads;
-    public String name;
-    public String imageUrl;
-    public String police_name;
-    public String name_uid;
-    public String datetime;
-    public String lat;
-    public String lng;
-    public String police_uid;
-    public String status;
+    List<Alerts> alertsList;
+    RecyclerView recyclerView;
 
     @Nullable
     @Override
@@ -48,120 +32,98 @@ public class FragmentMenu04 extends Fragment {
         //returning our layout file
         //change R.layout.yourlayoutfilename for each of your fragments
         View view = inflater.inflate(R.layout.fragment_menu_04, container, false);
+
+        recyclerView = (RecyclerView)view.findViewById(R.id.recyclerView);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
+
+        alertsList = new ArrayList<>();
+
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("Alerts");
+        ref.addValueEventListener(
+                new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        for(com.google.firebase.database.DataSnapshot singleSnapshot : dataSnapshot.getChildren()){
+                            String name_uid = singleSnapshot.getKey();
+                            String name = singleSnapshot.child("name").getValue(String.class);
+                            String datetime = singleSnapshot.child("datetime").getValue(String.class);
+                            String lat = singleSnapshot.child("lat").getValue(String.class);
+                            String lng = singleSnapshot.child("lng").getValue(String.class);
+                            String police_uid = singleSnapshot.child("police_uid").getValue(String.class);
+                            String police_name = singleSnapshot.child("police_name").getValue(String.class);
+                            String status = singleSnapshot.child("status").getValue(String.class);
+                            String imageUrl = singleSnapshot.child("image_url").getValue(String.class);
+                            if(status.equals("P")){
+                                status = "Waiting";
+                            } else if(status.equals("C")){
+                                status = "On the way";
+                            }
+
+                            Log.d("test", police_uid);
+                            Log.d("test", police_name);
+                            Log.d("test", name);
+                            Log.d("test", imageUrl);
+                            Log.d("test", lat);
+                            Log.d("test", lng);
+                            Log.d("test", datetime);
+                            Log.d("test", status);
+                            Log.d("test", "-----------");
+
+                            alertsList.add(
+                                    new Alerts(
+                                            police_uid,
+                                            police_name,
+                                            name,
+                                            imageUrl,
+                                            lat,
+                                            lng,
+                                            datetime,
+                                            status,
+                                            false));
+                        }
+
+                        //creating recyclerview adapter
+                        final Context context = getContext();
+                        AlertsAdapter alertsAdapter = new AlertsAdapter(getActivity().getApplicationContext(), alertsList);
+
+                        //setting adapter to recyclerview
+                        recyclerView.setAdapter(alertsAdapter);
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        //handle databaseError
+                    }
+                });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         init(view);
         return view;
     }
 
     private void init(View view){
 
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("Alerts");
-        ref.addValueEventListener(
-        new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                Log.d("testtest", "detect");
-                //Get map of users in datasnapshot
-                for(com.google.firebase.database.DataSnapshot singleSnapshot : dataSnapshot.getChildren()){
-                    name_uid = singleSnapshot.getKey();
-                    String name = singleSnapshot.child("name").getValue(String.class);
-                    String datetime = singleSnapshot.child("datetime").getValue(String.class);
-                    String lat = singleSnapshot.child("lat").getValue(String.class);
-                    String lng = singleSnapshot.child("lng").getValue(String.class);
-                    String police_uid = singleSnapshot.child("police_uid").getValue(String.class);
-                    String police_name = singleSnapshot.child("police_name").getValue(String.class);
-                    String status = singleSnapshot.child("status").getValue(String.class);
-                    String image_url = singleSnapshot.child("image_url").getValue(String.class);
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                //handle databaseError
-            }
-        });
 
 
 
-//        DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("Alerts");
-//        ref.addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-//                    for(com.google.firebase.database.DataSnapshot singleSnapshot : dataSnapshot.getChildren()){
-//                        String name_uid = singleSnapshot.getKey();
-//                        String datetime = singleSnapshot.child("datetime").getValue(String.class);
-//                        String lat = singleSnapshot.child("lat").getValue(String.class);
-//                        String lng = singleSnapshot.child("lng").getValue(String.class);
-//                        String police_uid = singleSnapshot.child("police_uid").getValue(String.class);
-//                        asdasd = singleSnapshot.child("status").getValue(String.class);
-//                        String asds = "";
-//
-//                        if (!police_uid.equals("-")) {
-//                            DatabaseReference ref_police_uid = firebaseDatabase.getReference("Users/" + police_uid);
-//                            ref_police_uid.addValueEventListener(new ValueEventListener() {
-//                                @Override
-//                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-//                                    Information information = dataSnapshot.getValue(Information.class);
-//                                    textViewName.setText("Police Officer: " + information.getName());
-//                                    final Context context = getContext();
-//                                    Glide.with(context)
-//                                            .load(information.getImageUrl())
-//                                            .into(imageViewProfile);
-//
-//                                    name = information.getName();
-//                                    imageUrl = information.getImageUrl();
-//                                }
-//
-//                                @Override
-//                                public void onCancelled(@NonNull DatabaseError databaseError) {
-//
-//                                }
-//                            });
-//                        }
-//                    }
-//
-//                    Log.d("testtest", asdasd + " asdasdasdsd s1223");
-//                try{
-//                    // Get police officer if exists yet
-//                    try {
-////                        String police_uid = alerts.getPolice_uid();
-////                        if (!police_uid.equals("-")) {
-////                            DatabaseReference databaseReference = firebaseDatabase.getReference("Users/" + police_uid);
-////                            databaseReference.addValueEventListener(new ValueEventListener() {
-////                                @Override
-////                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-////                                    Information information = dataSnapshot.getValue(Information.class);
-////                                    textViewName.setText("Police Officer: " + information.getName());
-////                                    final Context context = getContext();
-////                                    Glide.with(context)
-////                                            .load(information.getImageUrl())
-////                                            .into(imageViewProfile);
-////
-////                                    name = information.getName();
-////                                    imageUrl = information.getImageUrl();
-////                                }
-////
-////                                @Override
-////                                public void onCancelled(@NonNull DatabaseError databaseError) {
-////
-////                                }
-////                            });
-////                        } else {
-////                            textViewName.setText("Police Officer: -");
-////                            imageViewProfile.setImageDrawable(getResources().getDrawable(R.drawable.baseline_account_circle_black_48));
-////                        }
-//                    }catch (Exception err){
-//
-//                    }
-//
-//                } catch (Exception err){
-//                }
-//            }
-//
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError databaseError) {
-//
-//            }
-//        });
+
     }
 
     @Override
