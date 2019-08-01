@@ -10,6 +10,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -148,6 +149,42 @@ public class HomeActivity extends AppCompatActivity
                 Glide.with(getApplicationContext())
                     .load(information.getImageUrl())
                     .into(imageViewSideMenuProfile);
+
+//                Log.d("testtest", information.getType());
+//                if(!information.getType().equals("C")){
+//                    DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("Alerts");
+//                    ref.addValueEventListener(
+//                    new ValueEventListener() {
+//                        @Override
+//                        public void onDataChange(DataSnapshot dataSnapshot) {
+//                            int count = 0;
+//                            for(com.google.firebase.database.DataSnapshot singleSnapshot : dataSnapshot.getChildren()){
+//                                String p_status = singleSnapshot.child("p_status").getValue(String.class);
+//                                if(!p_status.equals("D")){
+//                                    count++;
+//                                }
+//                            }
+//
+//                            if(count != 0){
+//                                NotificationCompat.Builder b = new NotificationCompat.Builder(getApplicationContext());
+//                                b.setAutoCancel(true)
+//                                        .setDefaults(NotificationCompat.DEFAULT_ALL)
+//                                        .setWhen(System.currentTimeMillis())
+//                                        .setSmallIcon(R.drawable.baseline_account_circle_black_48)
+//                                        .setTicker("PNP Emergency Alert")
+//                                        .setContentTitle("PNP Emergency Alert")
+//                                        .setContentText("Some need help. Please immediately check at Alerts menu.");
+//                                NotificationManager nm = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+//                                nm.notify(1, b.build());
+//                            }
+//                        }
+//
+//                        @Override
+//                        public void onCancelled(DatabaseError databaseError) {
+//                            //handle databaseError
+//                        }
+//                    });
+//                }
             }
 
             @Override
@@ -191,6 +228,43 @@ public class HomeActivity extends AppCompatActivity
 
             }
         });
+
+        String type = textViewSideMenuType.getText().toString();
+        Log.d("testtest", type);
+        if(!type.equals("Citizen") && !type.equals("-")){
+            DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("Alerts");
+            ref.addValueEventListener(
+            new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    int count = 0;
+                    for(com.google.firebase.database.DataSnapshot singleSnapshot : dataSnapshot.getChildren()){
+                        String p_status = singleSnapshot.child("p_status").getValue(String.class);
+                        if(!p_status.equals("D")){
+                            count++;
+                        }
+                    }
+
+                    if(count != 0){
+                        NotificationCompat.Builder b = new NotificationCompat.Builder(getApplicationContext());
+                        b.setAutoCancel(true)
+                                .setDefaults(NotificationCompat.DEFAULT_ALL)
+                                .setWhen(System.currentTimeMillis())
+                                .setSmallIcon(R.drawable.baseline_account_circle_black_48)
+                                .setTicker("PNP Emergency Alert")
+                                .setContentTitle("PNP Emergency Alert")
+                                .setContentText("Someone need help. Please immediately check at Alerts menu.");
+                        NotificationManager nm = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+                        nm.notify(1, b.build());
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    //handle databaseError
+                }
+            });
+        }
     }
 
     @Override

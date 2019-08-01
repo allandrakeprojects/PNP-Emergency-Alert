@@ -85,97 +85,99 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ProductVie
         final Alerts alerts = alertsList.get(position);
 
         //binding the data with the viewholder views
-//        holder.textViewInfoList.setText(alerts.getName() + "\n" + alerts.getDatetime() + "\nPolice Officer: " + alerts.getPolice_name() + "\nStatus: " + alerts.getStatus());
-//        holder.buttonViewMap.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                String url = "http://www.google.com/maps/place/"+alerts.getLat()+","+alerts.getLng();
-//                try {
-//                    Uri uri = Uri.parse("googlechrome://navigate?url="+ url);
-//                    Intent i = new Intent(Intent.ACTION_VIEW, uri);
-//                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//                    view.getContext().startActivity(i);
-//                } catch (ActivityNotFoundException e) {
-//                    Uri uri = Uri.parse(url);
-//                    // Chrome is probably not installed
-//                    // OR not selected as default browser OR if no Browser is selected as default browser
-//                    Intent i = new Intent(Intent.ACTION_VIEW, uri);
-//                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//                    view.getContext().startActivity(i);
-//                }
-//            }
-//        });
-//        Glide.with(holder.imageViewProfileList.getContext())
-//            .load(alerts.getImageUrl())
-//            .into(holder.imageViewProfileList);
-//
-//        if(alerts.getStatus().equals("Waiting")){
-//            holder.buttonRespond.setVisibility(View.VISIBLE);
-//            holder.buttonDone.setVisibility(View.GONE);
-//        } else if(alerts.getStatus().equals("On the way")){
-//            holder.buttonRespond.setVisibility(View.GONE);
-//            holder.buttonDone.setVisibility(View.VISIBLE);
-//        }
+        holder.textViewInfoList.setText(alerts.getC_name() + "\n" + alerts.getC_datecreated() + "\nPolice Officer: " + alerts.getP_name() + "\nStatus: " + alerts.getP_status());
+        holder.buttonViewMap.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String url = "http://www.google.com/maps/place/"+alerts.getC_lat()+","+alerts.getC_lng();
+                try {
+                    Uri uri = Uri.parse("googlechrome://navigate?url="+ url);
+                    Intent i = new Intent(Intent.ACTION_VIEW, uri);
+                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    view.getContext().startActivity(i);
+                } catch (ActivityNotFoundException e) {
+                    Uri uri = Uri.parse(url);
+                    // Chrome is probably not installed
+                    // OR not selected as default browser OR if no Browser is selected as default browser
+                    Intent i = new Intent(Intent.ACTION_VIEW, uri);
+                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    view.getContext().startActivity(i);
+                }
+            }
+        });
+        Glide.with(holder.imageViewProfileList.getContext())
+            .load(alerts.getC_imgUrl())
+            .into(holder.imageViewProfileList);
+
+        if(alerts.getP_status().equals("Waiting")){
+            holder.buttonRespond.setVisibility(View.VISIBLE);
+            holder.buttonDone.setVisibility(View.GONE);
+        } else if(alerts.getP_status().equals("On the way")){
+            holder.buttonRespond.setVisibility(View.GONE);
+            holder.buttonDone.setVisibility(View.VISIBLE);
+        } else if(alerts.getP_status().equals("Done")){
+            holder.buttonRespond.setVisibility(View.GONE);
+            holder.buttonDone.setVisibility(View.GONE);
+        }
 
         holder.buttonRespond.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final DatabaseReference databaseReference = firebaseDatabase.getReference("Alerts/" + alerts.getC_uid());
-                databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                            final Alerts alerts = dataSnapshot.getValue(Alerts.class);
-                            FirebaseUser user = firebaseAuth.getCurrentUser();
-                            final DatabaseReference databaseReference1 = firebaseDatabase.getReference("Users/" + user.getUid());
+                FirebaseUser user = firebaseAuth.getCurrentUser();
+                final DatabaseReference databaseReference1 = firebaseDatabase.getReference("Users/" + user.getUid());
+                databaseReference1.addListenerForSingleValueEvent(
+                    new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            Information information = dataSnapshot.getValue(Information.class);
+                            FirebaseUser user1 = firebaseAuth.getCurrentUser();
+                            DatabaseReference query1 = FirebaseDatabase.getInstance().getReference().child("Alerts");
+                            alerts.setP_uid(user1.getUid());
+                            alerts.setP_name(information.getName());
 
-                            databaseReference1.addListenerForSingleValueEvent(
-                                        new ValueEventListener() {
-                                            @Override
-                                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                                Information information = dataSnapshot.getValue(Information.class);
-                                                try{
-                                                    FirebaseUser user = firebaseAuth.getCurrentUser();
-//                                                    Alerts alerts_ = new Alerts(alerts.getName_uid(), user.getUid(), information.getName(), alerts.getName(), alerts.getImageUrl(), alerts.getLat(), alerts.getLng(), alerts.getDatetime(), "C", true);
-//                                                    databaseReference.setValue(alerts_);
-                                                } catch (Exception err){
-
-                                                }
-
-                                            }
-
-                                            @Override
-                                            public void onCancelled(DatabaseError databaseError) {
-
-                                            }
+                            Query query = FirebaseDatabase.getInstance().getReference().child("Alerts").orderByChild("c_uid");
+                            query.equalTo(alerts.getC_uid()).addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                    for(DataSnapshot alertSnapshot : dataSnapshot.getChildren()){
+                                        String status = alertSnapshot.child("p_status").getValue().toString();
+                                        if(!status.equals("D")){
+                                            alertSnapshot.getRef().child("p_status").setValue("O");
+                                            alertSnapshot.getRef().child("p_uid").setValue(alerts.getP_uid());
+                                            alertSnapshot.getRef().child("p_name").setValue(alerts.getP_name());
                                         }
-                                );
+                                    }
+                                }
 
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError databaseError) {
 
+                                }
+                            });
                         }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
 
+                        }
                     }
-                });
+                );
             }
         });
 
         holder.buttonDone.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final DatabaseReference databaseReference = firebaseDatabase.getReference("Alerts/" + alerts.getC_uid());
-                databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
+                final Query query = FirebaseDatabase.getInstance().getReference().child("Alerts").orderByChild("c_uid");
+                query.equalTo(alerts.getC_uid()).addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        String name_uid = dataSnapshot.getKey().toString();
-                        final Alerts alerts = dataSnapshot.getValue(Alerts.class);
-//                        Alerts alerts_ = new Alerts(alerts.getName_uid(), alerts.getPolice_uid(), alerts.getPolice_name(), alerts.getName(), alerts.getImageUrl(), alerts.getLat(), alerts.getLng(), alerts.getDatetime(), "D", true);
-//                        databaseReference.setValue(null);
-
-
-                        final DatabaseReference databaseReference12 = FirebaseDatabase.getInstance().getReference("History/" + name_uid);
-                        databaseReference12.setValue(alerts);
+                        for(DataSnapshot alertSnapshot : dataSnapshot.getChildren()){
+                            String status = alertSnapshot.child("p_status").getValue().toString();
+                            if(!status.equals("D")){
+                                alertSnapshot.getRef().child("p_status").setValue("D");
+                            }
+                        }
                     }
 
                     @Override
