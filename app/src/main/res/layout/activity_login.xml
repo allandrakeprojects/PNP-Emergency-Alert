@@ -50,8 +50,7 @@
                     style="@style/modifiedEditText"
                     android:hint="@string/login_email_hint"
                     android:inputType="textEmailAddress"
-                    android:maxLines="1"
-                    android:text="pnpemergencyalertapp@gmail.com" />
+                    android:maxLines="1" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -64,8 +63,7 @@
                     style="@style/modifiedEditText"
                     android:hint="@string/login_password_hint"
                     android:inputType="textPassword"
-                    android:maxLines="1"
-                    android:text="adminPnP1" />
+                    android:maxLines="1" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <!--<TextView-->
