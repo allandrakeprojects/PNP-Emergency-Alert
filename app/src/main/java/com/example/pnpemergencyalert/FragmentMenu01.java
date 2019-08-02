@@ -140,9 +140,11 @@ public class FragmentMenu01 extends Fragment {
         query.equalTo(firebaseAuth.getUid()).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                boolean detectD = false;
                 for(DataSnapshot alertSnapshot : dataSnapshot.getChildren()){
                     String status = alertSnapshot.child("p_status").getValue().toString();
                     if(!status.equals("D")){
+                        detectD = true;
                         cardViewAlert.setVisibility(View.INVISIBLE);
                         cardViewInfo.setVisibility(View.VISIBLE);
 
@@ -189,16 +191,16 @@ public class FragmentMenu01 extends Fragment {
                             cardViewAlert.setVisibility(View.VISIBLE);
                             cardViewInfo.setVisibility(View.INVISIBLE);
                         }
-
-                        break;
-                    } else{
-                        textViewName.setText("Police Officer: -");
-                        textViewStatus.setText("Status: -");
-                        imageViewProfile.setImageResource(R.drawable.baseline_account_circle_black_48);
-//                            imageViewProfile.setImageDrawable(FragmentMenu01.this.getContext().getDrawable(R.drawable.baseline_account_circle_black_48));
-                        cardViewAlert.setVisibility(View.VISIBLE);
-                        cardViewInfo.setVisibility(View.INVISIBLE);
                     }
+                }
+
+                if(!detectD){
+                    textViewName.setText("Police Officer: -");
+                    textViewStatus.setText("Status: -");
+                    imageViewProfile.setImageResource(R.drawable.baseline_account_circle_black_48);
+//                            imageViewProfile.setImageDrawable(FragmentMenu01.this.getContext().getDrawable(R.drawable.baseline_account_circle_black_48));
+                    cardViewAlert.setVisibility(View.VISIBLE);
+                    cardViewInfo.setVisibility(View.INVISIBLE);
                 }
 
 
@@ -347,7 +349,7 @@ public class FragmentMenu01 extends Fragment {
                             Log.d(TAG, "onComplete: found location");
                             Location currentLocation = (Location) task.getResult();
                             //testing
-//                            latLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+                            latLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
 //                            Log.d("testtesttest", "Current location: http://www.google.com/maps/place/"+latLng.latitude+","+latLng.longitude);
 
                             FirebaseUser user = firebaseAuth.getCurrentUser();
@@ -361,7 +363,7 @@ public class FragmentMenu01 extends Fragment {
 
                                     Information information = dataSnapshot.getValue(Information.class);
                                     FirebaseUser user = firebaseAuth.getCurrentUser();
-                                    Alerts alerts = new Alerts(user.getUid(), information.getName(), information.getImageUrl(), "lat" + "", "lng" + "", dateToStr, "-", "-", "W", false);
+                                    Alerts alerts = new Alerts(user.getUid(), information.getName(), information.getImageUrl(), latLng.latitude + "", latLng.longitude + "", dateToStr, "-", "-", "W", false);
                                     String id = databaseReference.child("Alerts").push().getKey();
                                     String parent_id = databaseReference.child("transaction").push().getKey();
                                     databaseReference.child("Alerts").child(parent_id).setValue(alerts);

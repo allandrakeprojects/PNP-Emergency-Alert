@@ -136,7 +136,7 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ProductVie
                             alerts.setP_name(information.getName());
 
                             Query query = FirebaseDatabase.getInstance().getReference().child("Alerts").orderByChild("c_uid");
-                            query.equalTo(alerts.getC_uid()).addValueEventListener(new ValueEventListener() {
+                            query.equalTo(alerts.getC_uid()).addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                                     for(DataSnapshot alertSnapshot : dataSnapshot.getChildren()){
@@ -169,7 +169,7 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ProductVie
             @Override
             public void onClick(View v) {
                 final Query query = FirebaseDatabase.getInstance().getReference().child("Alerts").orderByChild("c_uid");
-                query.equalTo(alerts.getC_uid()).addValueEventListener(new ValueEventListener() {
+                query.equalTo(alerts.getC_uid()).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         for(DataSnapshot alertSnapshot : dataSnapshot.getChildren()){

@@ -77,6 +77,8 @@ public class FragmentMenu04 extends Fragment {
                                     p_status = "Done";
                                 }
 
+                                Log.d("testtest", c_datecreated);
+
                                 alertsList.add(
                                     new Alerts(
                                         c_uid,
