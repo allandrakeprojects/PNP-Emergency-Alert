@@ -160,6 +160,7 @@ public class HomeActivity extends AppCompatActivity
                         ft.replace(R.id.content_frame, fragment);
                         ft.commit();
                     }
+                    displaySelectedScreen(2131296401);
 
                     Menu nav_Menu = navigationView.getMenu();
                     nav_Menu.findItem(R.id.nav_send_alert).setVisible(false);
