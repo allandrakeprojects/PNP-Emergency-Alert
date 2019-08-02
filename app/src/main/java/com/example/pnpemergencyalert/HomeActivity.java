@@ -17,6 +17,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -81,7 +82,6 @@ public class HomeActivity extends AppCompatActivity
         drawer.addDrawerListener(toggle);
         toggle.syncState();
         navigationView.setNavigationItemSelectedListener(this);
-        displaySelectedScreen(2131296378);
         View headerView = navigationView.getHeaderView(0);
 
 //        Spinner spinner = findViewById(R.id.spinnerProfileGender);
@@ -101,7 +101,6 @@ public class HomeActivity extends AppCompatActivity
         textViewSideMenuType = (TextView)headerView.findViewById(R.id.textViewSideMenuType);
         imageViewSideMenuProfile = (ImageView)headerView.findViewById(R.id.imageViewSideMenuProfile);
 
-
         progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Getting info...");
         progressDialog.setCanceledOnTouchOutside(false);
@@ -119,6 +118,14 @@ public class HomeActivity extends AppCompatActivity
                 textViewSideMenuName.setText(information.getName());
                 if(information.getType().equals("C")){
                     textViewSideMenuType.setText("Citizen");
+                    Fragment fragment = new FragmentMenu01();
+                    //replacing the fragment
+                    if (fragment != null) {
+                        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+                        ft.replace(R.id.content_frame, fragment);
+                        ft.commit();
+                    }
+                    displaySelectedScreen(2131296406);
 
                     Menu nav_Menu = navigationView.getMenu();
                     nav_Menu.findItem(R.id.nav_send_alert).setVisible(true);
@@ -129,6 +136,14 @@ public class HomeActivity extends AppCompatActivity
 
                 } else if(information.getType().equals("A")){
                     textViewSideMenuType.setText("ADMINISTRATOR");
+                    Fragment fragment = new FragmentMenu04();
+                    //replacing the fragment
+                    if (fragment != null) {
+                        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+                        ft.replace(R.id.content_frame, fragment);
+                        ft.commit();
+                    }
+                    displaySelectedScreen(2131296401);
 
                     Menu nav_Menu = navigationView.getMenu();
                     nav_Menu.findItem(R.id.nav_send_alert).setVisible(false);
@@ -138,6 +153,13 @@ public class HomeActivity extends AppCompatActivity
                     nav_Menu.findItem(R.id.nav_police_officer).setVisible(true);
                 } else if(information.getType().equals("P")){
                     textViewSideMenuType.setText("Police Officer");
+                    Fragment fragment = new FragmentMenu04();
+                    //replacing the fragment
+                    if (fragment != null) {
+                        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+                        ft.replace(R.id.content_frame, fragment);
+                        ft.commit();
+                    }
 
                     Menu nav_Menu = navigationView.getMenu();
                     nav_Menu.findItem(R.id.nav_send_alert).setVisible(false);
@@ -174,7 +196,7 @@ public class HomeActivity extends AppCompatActivity
                                         .setSmallIcon(R.drawable.baseline_account_circle_black_48)
                                         .setTicker("PNP Emergency Alert")
                                         .setContentTitle("PNP Emergency Alert")
-                                        .setContentText("Someone need help. Please immediately check at Alerts menu.");
+                                        .setContentText("Someone need help.");
                                 NotificationManager nm = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
                                 nm.notify(1, b.build());
                             }
@@ -292,6 +314,7 @@ public class HomeActivity extends AppCompatActivity
 
     private void displaySelectedScreen(int itemId) {
 
+        Log.d("testtest", itemId + "");
         //creating fragment object
         Fragment fragment = null;
 

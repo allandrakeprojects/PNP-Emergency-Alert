@@ -131,7 +131,6 @@ public class AlertsAdapter extends RecyclerView.Adapter<AlertsAdapter.ProductVie
                         public void onDataChange(DataSnapshot dataSnapshot) {
                             Information information = dataSnapshot.getValue(Information.class);
                             FirebaseUser user1 = firebaseAuth.getCurrentUser();
-                            DatabaseReference query1 = FirebaseDatabase.getInstance().getReference().child("Alerts");
                             alerts.setP_uid(user1.getUid());
                             alerts.setP_name(information.getName());
 

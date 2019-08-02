@@ -348,7 +348,6 @@ public class FragmentMenu01 extends Fragment {
                         if (task.isSuccessful()) {
                             Log.d(TAG, "onComplete: found location");
                             Location currentLocation = (Location) task.getResult();
-                            //testing
                             latLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
 //                            Log.d("testtesttest", "Current location: http://www.google.com/maps/place/"+latLng.latitude+","+latLng.longitude);
 
