@@ -6,6 +6,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -35,6 +36,7 @@ import androidx.fragment.app.FragmentTransaction;
 import com.bumptech.glide.Glide;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -57,6 +59,8 @@ public class HomeActivity extends AppCompatActivity
     private FirebaseAuth firebaseAuth;
     private FirebaseDatabase firebaseDatabase;
 
+    DBAdapter helper;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,7 +76,7 @@ public class HomeActivity extends AppCompatActivity
 //            }
 //        });
 
-        createNetErrorDialog();
+//        createNetErrorDialog();
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         final NavigationView navigationView = findViewById(R.id.nav_view);
@@ -100,6 +104,8 @@ public class HomeActivity extends AppCompatActivity
         textViewSideMenuName = (TextView)headerView.findViewById(R.id.textViewSideMenuName);
         textViewSideMenuType = (TextView)headerView.findViewById(R.id.textViewSideMenuType);
         imageViewSideMenuProfile = (ImageView)headerView.findViewById(R.id.imageViewSideMenuProfile);
+
+        helper = new DBAdapter(getApplicationContext());
 
         progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Getting info...");
@@ -174,32 +180,59 @@ public class HomeActivity extends AppCompatActivity
                     .load(information.getImageUrl())
                     .into(imageViewSideMenuProfile);
 
-                Log.d("testtest", information.getType());
                 if(!information.getType().equals("C")){
-                    DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("Alerts");
+                    Query ref = FirebaseDatabase.getInstance().getReference().child("Alerts");
                     ref.addValueEventListener(
                     new ValueEventListener() {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {
                             int count = 0;
+                            String last_id = "";
+
                             for(com.google.firebase.database.DataSnapshot singleSnapshot : dataSnapshot.getChildren()){
                                 String p_status = singleSnapshot.child("p_status").getValue(String.class);
                                 if(!p_status.equals("D")){
+                                    last_id = singleSnapshot.getKey();
                                     count++;
                                 }
                             }
 
                             if(count != 0){
-                                NotificationCompat.Builder b = new NotificationCompat.Builder(getApplicationContext());
-                                b.setAutoCancel(true)
-                                        .setDefaults(NotificationCompat.DEFAULT_ALL)
-                                        .setWhen(System.currentTimeMillis())
-                                        .setSmallIcon(R.drawable.baseline_account_circle_black_48)
-                                        .setTicker("PNP Emergency Alert")
-                                        .setContentTitle("PNP Emergency Alert")
-                                        .setContentText("Someone need help.");
-                                NotificationManager nm = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-                                nm.notify(1, b.build());
+                                final Cursor res = helper.getAllData();
+                                if(res!=null && res.getCount()>0){
+                                    if (res.moveToFirst()) {
+                                        if(!res.getString(1).equals(last_id)){
+                                            NotificationCompat.Builder b = new NotificationCompat.Builder(getApplicationContext());
+                                            b.setAutoCancel(true)
+                                                    .setDefaults(NotificationCompat.DEFAULT_ALL)
+                                                    .setWhen(System.currentTimeMillis())
+                                                    .setSmallIcon(R.drawable.baseline_account_circle_black_48)
+                                                    .setTicker("PNP Emergency Alert")
+                                                    .setContentTitle("PNP Emergency Alert")
+                                                    .setContentText("Someone need help.");
+                                            NotificationManager nm = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+                                            nm.notify(1, b.build());
+
+                                            helper.updateUser(last_id);
+                                        }
+                                    }
+                                } else{
+                                    boolean isInserted = helper.insertData(last_id);
+                                    if(isInserted){
+                                        NotificationCompat.Builder b = new NotificationCompat.Builder(getApplicationContext());
+                                        b.setAutoCancel(true)
+                                                .setDefaults(NotificationCompat.DEFAULT_ALL)
+                                                .setWhen(System.currentTimeMillis())
+                                                .setSmallIcon(R.drawable.baseline_account_circle_black_48)
+                                                .setTicker("PNP Emergency Alert")
+                                                .setContentTitle("PNP Emergency Alert")
+                                                .setContentText("Someone need help.");
+                                        NotificationManager nm = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+                                        nm.notify(1, b.build());
+                                    } else{
+                                        Toast.makeText(HomeActivity.this, "Please check your internet connection.", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
                             }
                         }
 
@@ -222,8 +255,9 @@ public class HomeActivity extends AppCompatActivity
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 for(DataSnapshot alertSnapshot : dataSnapshot.getChildren()){
+                    String c_uid = alertSnapshot.child("c_uid").getValue().toString();
                     String status = alertSnapshot.child("p_status").getValue().toString();
-                    if(!status.equals("D")){
+                    if(!status.equals("D") && c_uid.equals(firebaseAuth.getUid())){
                         Boolean read = (Boolean) alertSnapshot.child("c_read").getValue();
                         if(status.equals("O")){
                             if(!read){
@@ -314,8 +348,6 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void displaySelectedScreen(int itemId) {
-
-        Log.d("testtest", itemId + "");
         //creating fragment object
         Fragment fragment = null;
 
