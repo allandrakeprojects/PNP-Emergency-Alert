@@ -107,7 +107,7 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
         buttonRegister = (Button)findViewById(R.id.buttonRegister);
         progressDialog = new ProgressDialog(this);
 
-        requestMultiplePermissions();
+//        requestMultiplePermissions();
 
         buttonPicture = (RelativeLayout) findViewById(R.id.picture);
         imageViewProfile = (ImageView) findViewById(R.id.imageViewProfile);
@@ -523,7 +523,9 @@ public class RegisterActivity extends AppCompatActivity implements AdapterView.O
                 .withPermissions(
                         Manifest.permission.CAMERA,
                         Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                        Manifest.permission.READ_EXTERNAL_STORAGE)
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION)
                 .withListener(new MultiplePermissionsListener() {
                     @Override
                     public void onPermissionsChecked(MultiplePermissionsReport report) {

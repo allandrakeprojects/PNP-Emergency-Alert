@@ -9,8 +9,10 @@ import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Debug;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -348,6 +350,9 @@ public class FragmentMenu01 extends Fragment {
                         if (task.isSuccessful()) {
                             Log.d(TAG, "onComplete: found location");
                             Location currentLocation = (Location) task.getResult();
+                            String asd1 = String.valueOf(currentLocation.getLatitude());
+                            String asd2 = String.valueOf(currentLocation.getLongitude());
+                            Log.d("testtesttest", asd1 + " --- " + asd2);
                             latLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
 //                            Log.d("testtesttest", "Current location: http://www.google.com/maps/place/"+latLng.latitude+","+latLng.longitude);
 

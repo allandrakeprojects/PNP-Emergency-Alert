@@ -116,7 +116,7 @@ public class HomeActivity extends AppCompatActivity
         firebaseDatabase = firebaseDatabase.getInstance();
 
         DatabaseReference databaseReference = firebaseDatabase.getReference("Users/" + firebaseAuth.getUid());
-        databaseReference.addValueEventListener(new ValueEventListener() {
+        databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 progressDialog.dismiss();
@@ -166,6 +166,7 @@ public class HomeActivity extends AppCompatActivity
                         ft.replace(R.id.content_frame, fragment);
                         ft.commit();
                     }
+
                     displaySelectedScreen(2131296401);
 
                     Menu nav_Menu = navigationView.getMenu();
@@ -206,7 +207,7 @@ public class HomeActivity extends AppCompatActivity
                                             b.setAutoCancel(true)
                                                     .setDefaults(NotificationCompat.DEFAULT_ALL)
                                                     .setWhen(System.currentTimeMillis())
-                                                    .setSmallIcon(R.drawable.baseline_account_circle_black_48)
+                                                    .setSmallIcon(R.drawable.ic_alert)
                                                     .setTicker("PNP Emergency Alert")
                                                     .setContentTitle("PNP Emergency Alert")
                                                     .setContentText("Someone need help.");
@@ -223,7 +224,7 @@ public class HomeActivity extends AppCompatActivity
                                         b.setAutoCancel(true)
                                                 .setDefaults(NotificationCompat.DEFAULT_ALL)
                                                 .setWhen(System.currentTimeMillis())
-                                                .setSmallIcon(R.drawable.baseline_account_circle_black_48)
+                                                .setSmallIcon(R.drawable.ic_alert)
                                                 .setTicker("PNP Emergency Alert")
                                                 .setContentTitle("PNP Emergency Alert")
                                                 .setContentText("Someone need help.");
@@ -265,7 +266,7 @@ public class HomeActivity extends AppCompatActivity
                                 b.setAutoCancel(true)
                                         .setDefaults(NotificationCompat.DEFAULT_ALL)
                                         .setWhen(System.currentTimeMillis())
-                                        .setSmallIcon(R.drawable.baseline_account_circle_black_48)
+                                        .setSmallIcon(R.drawable.ic_alert)
                                         .setTicker("PNP Emergency Alert")
                                         .setContentTitle("PNP Emergency Alert")
                                         .setContentText("Our police officer is on the way now.");

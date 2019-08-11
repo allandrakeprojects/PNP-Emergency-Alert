@@ -148,7 +148,7 @@ public class FragmentMenu02 extends Fragment {
                             .into(imageViewProfile);
                 }
                 imageURL = information.getImageUrl();
-                if(information.getType() == "C"){
+                if(information.getType().equals("C")){
                     type = "C";
                 } else{
                     type = "P";
