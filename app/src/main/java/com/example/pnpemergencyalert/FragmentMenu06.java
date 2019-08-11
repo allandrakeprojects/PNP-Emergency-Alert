@@ -205,17 +205,6 @@ public class FragmentMenu06 extends Fragment {
                                     }
                                 });
                                 isImageChanges = false;
-
-                                editTextPoliceFullName.setText("");
-                                editTextPoliceAddress.setText("");
-                                editTextPoliceEmail.setText("");
-                                editTextPolicePassword.setText("");
-                                spinnerPoliceGender.setSelection(0);
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                                    imageViewPolice.setImageDrawable(getResources().getDrawable(R.drawable.baseline_account_circle_black_48, getContextOfApplication().getTheme()));
-                                } else {
-                                    imageViewPolice.setImageDrawable(getResources().getDrawable(R.drawable.baseline_account_circle_black_48));
-                                }
                                 break;
                             case DialogInterface.BUTTON_POSITIVE:
                                 //No button clicked
