@@ -67,8 +67,20 @@
                 android:layout_height="26dp"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="5dp"
-                android:layout_marginRight="5dp"
+                android:layout_marginRight="2dp"
                 android:text="VIEW MAP  " />
+
+            <Button
+                android:id="@+id/buttonViewImage"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                style="@style/loginButton"
+                android:layout_width="100dp"
+                android:layout_height="26dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="5dp"
+                android:layout_marginLeft="2dp"
+                android:layout_marginRight="2dp"
+                android:text="VIEW IMAGE   " />
 
             <Button
                 android:id="@+id/buttonRespond"
@@ -78,8 +90,8 @@
                 android:layout_height="26dp"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="5dp"
-                android:layout_marginLeft="5dp"
-                android:layout_marginRight="5dp"
+                android:layout_marginLeft="2dp"
+                android:layout_marginRight="2dp"
                 android:text="RESPOND   "/>
 
             <Button
@@ -90,7 +102,7 @@
                 android:layout_height="26dp"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="5dp"
-                android:layout_marginLeft="5dp"
+                android:layout_marginLeft="2dp"
                 android:text="DONE   "/>
         </LinearLayout>
     </LinearLayout>

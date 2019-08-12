@@ -80,7 +80,6 @@ public class HomeActivity extends AppCompatActivity
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         final NavigationView navigationView = findViewById(R.id.nav_view);
-        navigationView.getMenu().getItem(0).setChecked(true);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
@@ -131,7 +130,8 @@ public class HomeActivity extends AppCompatActivity
                         ft.replace(R.id.content_frame, fragment);
                         ft.commit();
                     }
-                    displaySelectedScreen(2131296406);
+
+                    navigationView.getMenu().getItem(3).setChecked(true);
 
                     Menu nav_Menu = navigationView.getMenu();
                     nav_Menu.findItem(R.id.nav_send_alert).setVisible(true);
@@ -149,7 +149,8 @@ public class HomeActivity extends AppCompatActivity
                         ft.replace(R.id.content_frame, fragment);
                         ft.commit();
                     }
-                    displaySelectedScreen(2131296401);
+
+                    navigationView.getMenu().getItem(0).setChecked(true);
 
                     Menu nav_Menu = navigationView.getMenu();
                     nav_Menu.findItem(R.id.nav_send_alert).setVisible(false);
@@ -167,7 +168,7 @@ public class HomeActivity extends AppCompatActivity
                         ft.commit();
                     }
 
-                    displaySelectedScreen(2131296401);
+                    navigationView.getMenu().getItem(0).setChecked(true);
 
                     Menu nav_Menu = navigationView.getMenu();
                     nav_Menu.findItem(R.id.nav_send_alert).setVisible(false);
@@ -182,7 +183,7 @@ public class HomeActivity extends AppCompatActivity
                     .into(imageViewSideMenuProfile);
 
                 if(!information.getType().equals("C")){
-                    Query ref = FirebaseDatabase.getInstance().getReference().child("Alerts");
+                    Query ref = FirebaseDatabase.getInstance().getReference().child("Alert");
                     ref.addValueEventListener(
                     new ValueEventListener() {
                         @Override
@@ -251,7 +252,7 @@ public class HomeActivity extends AppCompatActivity
             }
         });
 
-        final Query query = FirebaseDatabase.getInstance().getReference().child("Alerts").orderByChild("c_uid");
+        final Query query = FirebaseDatabase.getInstance().getReference().child("Alert").orderByChild("c_uid");
         query.equalTo(firebaseAuth.getUid()).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {

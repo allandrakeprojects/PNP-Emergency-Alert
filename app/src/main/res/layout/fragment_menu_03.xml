@@ -93,7 +93,7 @@
                         android:textSize="16sp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="1. Registration – upon registering you need to fill the fields with your basic information also photo of you for identification. You must have an internet connection while registering.\n\n2. Alerts – you'll see here the alerts real-time you can see citizen location or map, you can respond and immediately notify the citizen that you're now on the way and you can click done so that it will go now to History menu.\n\n3. History - you'll see here all done alerts.\n\n4. Add Police Officer – as you are the Administrator you have the access to add police officer."/>
+                        android:text="1. Registration – upon registering you need to fill the fields with your basic information also photo of you for identification. You must have an internet connection while registering.\n\n2. Alerts – you'll see here the alert real-time you can see citizen location or map, you can respond and immediately notify the citizen that you're now on the way and you can click done so that it will go now to History menu.\n\n3. History - you'll see here all done alert.\n\n4. Add Police Officer – as you are the Administrator you have the access to add police officer."/>
                 </LinearLayout>
 
                 <LinearLayout
@@ -122,7 +122,7 @@
                         android:textSize="16sp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="1. Registration – upon registering you need to fill the fields with your basic information also photo of you for identification. You must have an internet connection while registering.\n\n2. Alerts – you'll see here the alerts real-time you can see citizen location or map, you can respond and immediately notify the citizen that you're now on the way and you can click done so that it will go now to History menu.\n\n3. History - you'll see here all done alerts.\n\n4. Profile Settings – you can easily update for user information also photo of you in this menu."/>
+                        android:text="1. Registration – upon registering you need to fill the fields with your basic information also photo of you for identification. You must have an internet connection while registering.\n\n2. Alerts – you'll see here the alert real-time you can see citizen location or map, you can respond and immediately notify the citizen that you're now on the way and you can click done so that it will go now to History menu.\n\n3. History - you'll see here all done alert.\n\n4. Profile Settings – you can easily update for user information also photo of you in this menu."/>
                 </LinearLayout>
 
         </LinearLayout>

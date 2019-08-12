@@ -3,22 +3,31 @@ package com.example.pnpemergencyalert;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.NotificationManager;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
-import android.location.LocationManager;
-import android.os.Build;
+import android.media.MediaScannerConnection;
+import android.net.Uri;
 import android.os.Bundle;
-import android.os.Debug;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.InputFilter;
+import android.text.InputType;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,7 +35,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
@@ -34,9 +42,12 @@ import com.bumptech.glide.Glide;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -45,17 +56,24 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.firebase.client.Firebase;
+import com.google.firebase.storage.UploadTask;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 
 import pl.droidsonroids.gif.GifImageView;
 
 public class FragmentMenu01 extends Fragment {
 
-    private ImageView imageViewAlert, imageViewProfile;
+    private ImageView imageViewAlert, imageViewProfile, imageViewAlertCapture;
     private GifImageView gifAlert;
     private CardView cardViewInfo, cardViewAlert;
     private TextView textViewName, textViewStatus;
@@ -69,7 +87,7 @@ public class FragmentMenu01 extends Fragment {
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
 
     public static LatLng latLng;
-    private static final String TAG = "testtesttest";
+    private static final String TAG = "test";
     Cursor cursorMsg, cursorDtl;
     String name;
     String imageUrl;
@@ -77,12 +95,16 @@ public class FragmentMenu01 extends Fragment {
     public static final int RequestPermissionCode  = 1 ;
     String activeUser;
     String color;
+    private int GALLERY = 1, CAMERA = 2;
+    private static final String IMAGE_DIRECTORY = "/PNP Emergency Alert";
+    private Uri contentURI;
 
     //Firebase
     private FirebaseAuth firebaseAuth;
     private FirebaseDatabase firebaseDatabase;
     private StorageReference storageReference;
     private DatabaseReference databaseReference;
+    private EditText input;
 
     @Nullable
     @Override
@@ -94,6 +116,7 @@ public class FragmentMenu01 extends Fragment {
         onAttach(getContext());
         //Firebase
         Firebase.setAndroidContext(getActivity().getApplicationContext());
+        storageReference = FirebaseStorage.getInstance().getReference("uploads");
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = firebaseDatabase.getReference();
@@ -101,10 +124,10 @@ public class FragmentMenu01 extends Fragment {
         init(view);
         return view;
     }
-
     private void init(View view){
         imageViewAlert = (ImageView)view.findViewById(R.id.imageViewAlert);
         imageViewProfile = (ImageView)view.findViewById(R.id.imageViewProfile);
+        imageViewAlertCapture = (ImageView)view.findViewById(R.id.imageViewAlertCapture);
         gifAlert = (GifImageView)view.findViewById(R.id.gifAlert);
         cardViewInfo = (CardView) view.findViewById(R.id.cardViewInfo);
         cardViewAlert = (CardView) view.findViewById(R.id.cardViewAlert);
@@ -119,11 +142,36 @@ public class FragmentMenu01 extends Fragment {
                     public void onClick(DialogInterface dialog, int which) {
                         switch (which){
                             case DialogInterface.BUTTON_NEGATIVE:
-                                cardViewAlert.setVisibility(View.INVISIBLE);
-                                cardViewInfo.setVisibility(View.VISIBLE);
 
-                                getLocationPermission();
-                                getDeviceLocation();
+                                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                                builder.setTitle("Short Description of Incident");
+
+                                input = new EditText(getContext());
+                                input.setInputType(InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+                                input.setSingleLine(false);
+                                input.setLines(2);
+                                input.setMaxLines(2);
+                                input.setGravity(Gravity.LEFT | Gravity.TOP);
+                                builder.setView(input);
+                                InputFilter[] FilterArray = new InputFilter[1];
+                                FilterArray[0] = new InputFilter.LengthFilter(100);
+                                input.setFilters(FilterArray);
+
+                                builder.setPositiveButton("Next", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        showPictureDialog();
+                                    }
+                                });
+
+                                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.cancel();
+                                    }
+                                });
+
+                                builder.show();
                                 break;
                             case DialogInterface.BUTTON_POSITIVE:
                                 //No button clicked
@@ -133,12 +181,12 @@ public class FragmentMenu01 extends Fragment {
                 };
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
-                builder.setMessage("Confirm that you're in danger?").setPositiveButton("Cancel", dialogClickListener)
-                        .setNegativeButton("Yes", dialogClickListener).show();
+                builder.setMessage("PNP Emergency Alert").setPositiveButton("Cancel", dialogClickListener)
+                        .setNegativeButton("Report an incident", dialogClickListener).show();
             }
         });
 
-        final Query query = FirebaseDatabase.getInstance().getReference().child("Alerts").orderByChild("c_uid");
+        final Query query = FirebaseDatabase.getInstance().getReference().child("Alert").orderByChild("c_uid");
         query.equalTo(firebaseAuth.getUid()).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -244,100 +292,7 @@ public class FragmentMenu01 extends Fragment {
 //        getActivity().setTitle("Menu 1");
     }
 
-
-
-
-
-
-
-
-
-
-
-
-//    private void fetchLocation() {
-//
-//
-//        if (ContextCompat.checkSelfPermission(getContext(),
-//                Manifest.permission.ACCESS_COARSE_LOCATION)
-//                != PackageManager.PERMISSION_GRANTED) {
-//
-//            Toast.makeText(getContext(), "dasdasdasdasdas1", Toast.LENGTH_SHORT).show();
-//            // Permission is not granted
-//            // Should we show an explanation?
-//            if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(),
-//                    Manifest.permission.ACCESS_COARSE_LOCATION)) {
-//                // Show an explanation to the user *asynchronously* -- don't block
-//                // this thread waiting for the user's response! After the user
-//                // sees the explanation, try again to request the permission.
-//
-//                new AlertDialog.Builder(getContext())
-//                        .setTitle("Required Location Permission")
-//                        .setMessage("You have to give this permission to acess this feature")
-//                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-//                            @Override
-//                            public void onClick(DialogInterface dialogInterface, int i) {
-//                                ActivityCompat.requestPermissions(getActivity(),
-//                                        new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
-//                                        MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
-//                            }
-//                        })
-//                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-//                            @Override
-//                            public void onClick(DialogInterface dialogInterface, int i) {
-//                                dialogInterface.dismiss();
-//                            }
-//                        })
-//                        .create()
-//                        .show();
-//
-//
-//            } else {
-//                // No explanation needed; request the permission
-//                ActivityCompat.requestPermissions(getActivity(),
-//                        new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
-//                        MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
-//
-//                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-//                // app-defined int constant. The callback method gets the
-//                // result of the request.
-//            }
-//        } else {
-//            Toast.makeText(getContext(), "dasdasdasdasdas2", Toast.LENGTH_SHORT).show();
-//            // Permission has already been granted
-//            mFusedLocationClient.getLastLocation()
-//            .addOnSuccessListener(getActivity(), new OnSuccessListener<Location>() {
-//                @Override
-//                public void onSuccess(Location location) {
-//                    // Got last known location. In some rare situations this can be null.
-//                    if (location != null) {
-//                        // Logic to handle location object
-//                        Double latitude = location.getLatitude();
-//                        Double longitude = location.getLongitude();
-//                        Log.d("testttestttest", "Latitude = "+latitude + "\nLongitude = " + longitude);
-//
-//                    } else{
-//                        Log.d("testttestttest", "Latitude =");
-//                    }
-//                }
-//            })
-//            .addOnFailureListener(getActivity(), new OnFailureListener() {
-//                @Override
-//                public void onFailure(@NonNull Exception e) {
-//                    Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-//                }
-//            });
-//        }
-//    }
-
-
-
-
-
-
-
-
-    private void getDeviceLocation(){
+    private void getDeviceLocation(final String downloadURI){
         Log.d(TAG, "getDeviceLocation: getting the device location");
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
 
@@ -352,9 +307,7 @@ public class FragmentMenu01 extends Fragment {
                             Location currentLocation = (Location) task.getResult();
                             String asd1 = String.valueOf(currentLocation.getLatitude());
                             String asd2 = String.valueOf(currentLocation.getLongitude());
-                            Log.d("testtesttest", asd1 + " --- " + asd2);
                             latLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-//                            Log.d("testtesttest", "Current location: http://www.google.com/maps/place/"+latLng.latitude+","+latLng.longitude);
 
                             FirebaseUser user = firebaseAuth.getCurrentUser();
                             DatabaseReference databaseReference1 = firebaseDatabase.getReference("Users/" + user.getUid());
@@ -367,10 +320,10 @@ public class FragmentMenu01 extends Fragment {
 
                                     Information information = dataSnapshot.getValue(Information.class);
                                     FirebaseUser user = firebaseAuth.getCurrentUser();
-                                    Alerts alerts = new Alerts(user.getUid(), information.getName(), information.getImageUrl(), latLng.latitude + "", latLng.longitude + "", dateToStr, "-", "-", "W", false);
-                                    String id = databaseReference.child("Alerts").push().getKey();
+                                    Alert alert = new Alert(user.getUid(), information.getName(), information.getImageUrl(), latLng.latitude + "", latLng.longitude + "", dateToStr, "-", "-", "W", input.getText().toString(), downloadURI, false);
+                                    String id = databaseReference.child("Alert").push().getKey();
                                     String parent_id = databaseReference.child("transaction").push().getKey();
-                                    databaseReference.child("Alerts").child(parent_id).setValue(alerts);
+                                    databaseReference.child("Alert").child(parent_id).setValue(alert);
                                 }
 
                                 @Override
@@ -453,21 +406,131 @@ public class FragmentMenu01 extends Fragment {
 
 
 
+    private void showPictureDialog(){
+        takePhotoFromCamera();
+    }
 
+    public void choosePhotoFromGallary() {
+        Intent galleryIntent = new Intent(Intent.ACTION_PICK,
+                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
 
+        startActivityForResult(galleryIntent, GALLERY);
+    }
 
+    private void takePhotoFromCamera() {
+        Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(intent, CAMERA);
+    }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == getActivity().RESULT_CANCELED) {
+            return;
+        }
+        if (requestCode == GALLERY) {
+            if (data != null) {
+                contentURI = data.getData();
+                try {
+                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContext().getContentResolver(), contentURI);
+//                    String path = saveImage(bitmap);
+//                    Toast.makeText(RegisterActivity.this, "Image Saved!", Toast.LENGTH_SHORT).show();
+                    imageViewAlertCapture.setImageBitmap(bitmap);
+                    imageViewAlertCapture.setTag("changesImage");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Toast.makeText(getContext(), "Failed!", Toast.LENGTH_SHORT).show();
+                }
+            }
 
+        } else if (requestCode == CAMERA) {
+            Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
+            imageViewAlertCapture.setImageBitmap(thumbnail);
+            saveImage(thumbnail);
+            imageViewAlertCapture.setTag("changesImage");
+            cardViewAlert.setVisibility(View.INVISIBLE);
+            cardViewInfo.setVisibility(View.VISIBLE);
+            uploadFile();
+//            Toast.makeText(RegisterActivity.this, "Image Saved!", Toast.LENGTH_SHORT).show();
+        }
+    }
 
+    public String saveImage(Bitmap myBitmap) {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        myBitmap.compress(Bitmap.CompressFormat.JPEG, 90, bytes);
+        File wallpaperDirectory = new File(
+                Environment.getExternalStorageDirectory() + IMAGE_DIRECTORY);
+        // have the object build the directory structure, if needed.
+        if (!wallpaperDirectory.exists()) {
+            wallpaperDirectory.mkdirs();
+        }
 
+        try {
+            File f = new File(wallpaperDirectory, Calendar.getInstance()
+                    .getTimeInMillis() + ".jpg");
+            f.createNewFile();
+            FileOutputStream fo = new FileOutputStream(f);
+            fo.write(bytes.toByteArray());
+            MediaScannerConnection.scanFile(getContext(),
+                    new String[]{f.getPath()},
+                    new String[]{"image/jpeg"}, null);
+            fo.close();
+            Log.d("TAG", "File Saved::---&gt;" + f.getAbsolutePath());
 
+            return f.getAbsolutePath();
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+        return "";
+    }
 
+    private void uploadFile() {
+        final StorageReference storageReference1 = storageReference.child(System.currentTimeMillis() + ".jpg");
 
+        imageViewAlertCapture.setDrawingCacheEnabled(true);
+        imageViewAlertCapture.buildDrawingCache();
+        Bitmap bitmap = ((BitmapDrawable) imageViewAlertCapture.getDrawable()).getBitmap();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] data = baos.toByteArray();
 
+        UploadTask uploadTask = storageReference1.putBytes(data);
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Handle unsuccessful uploads
+            }
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+            }
+        });
 
+        Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+            @Override
+            public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                if (!task.isSuccessful()) {
+                    throw task.getException();
+                }
 
+                // Continue with the task to get the download URL
+                return storageReference1.getDownloadUrl();
+            }
+        }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+            @Override
+            public void onComplete(@NonNull Task<Uri> task) {
+                if (task.isSuccessful()) {
+                    Uri downloadURI = task.getResult();
+                    getLocationPermission();
+                    getDeviceLocation(downloadURI.toString());
 
-
+                } else {
+                    // Handle failures
+                    // ...
+                }
+            }
+        });
+    }
 
 }

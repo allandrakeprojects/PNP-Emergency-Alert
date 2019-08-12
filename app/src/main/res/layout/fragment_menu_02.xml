@@ -142,7 +142,7 @@
                         style="@style/loginButton"
                         app:spinning_bar_width="4dp"
                         app:spinning_bar_color="#FFF"
-                        android:text="Update"
+                        android:text="Update   "
                         android:layout_gravity="center_horizontal"
                         android:layout_marginTop="@dimen/loginViewsMargin"
                         app:initialCornerAngle="27dp"

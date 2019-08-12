@@ -2,7 +2,6 @@ package com.example.pnpemergencyalert;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,14 +18,12 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import org.w3c.dom.Text;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class FragmentMenu04 extends Fragment {
 
-    List<Alerts> alertsList;
+    List<Alert> alertList;
     RecyclerView recyclerView;
     TextView textViewNoDataYet;
 
@@ -43,18 +40,18 @@ public class FragmentMenu04 extends Fragment {
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
 
-        alertsList = new ArrayList<>();
+        alertList = new ArrayList<>();
 
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("Alerts");
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("Alert");
         ref.addValueEventListener(
                 new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         //creating recyclerview adapter
                         final Context context = getContext();
-                        AlertsAdapter alertsAdapter = new AlertsAdapter(context, alertsList);
-                        alertsList.clear();
-                        alertsAdapter.notifyDataSetChanged();
+                        AlertAdapter alertAdapter = new AlertAdapter(context, alertList);
+                        alertList.clear();
+                        alertAdapter.notifyDataSetChanged();
                         int count = 0;
                         for(com.google.firebase.database.DataSnapshot singleSnapshot : dataSnapshot.getChildren()){
                             String p_status = singleSnapshot.child("p_status").getValue(String.class);
@@ -76,9 +73,11 @@ public class FragmentMenu04 extends Fragment {
                                 } else if(p_status.equals("D")){
                                     p_status = "Done";
                                 }
+                                String c_message = singleSnapshot.child("c_message").getValue(String.class);
+                                String c_capture = singleSnapshot.child("c_capture").getValue(String.class);
 
-                                alertsList.add(
-                                    new Alerts(
+                                alertList.add(
+                                    new Alert(
                                         c_uid,
                                         c_name,
                                         c_imgUrl,
@@ -88,6 +87,8 @@ public class FragmentMenu04 extends Fragment {
                                         p_uid,
                                         p_name,
                                         p_status,
+                                        c_message,
+                                        c_capture,
                                         false));
                             }
                         }
@@ -100,7 +101,7 @@ public class FragmentMenu04 extends Fragment {
 
 
                         //setting adapter to recyclerview
-                        recyclerView.setAdapter(alertsAdapter);
+                        recyclerView.setAdapter(alertAdapter);
                     }
 
                     @Override
