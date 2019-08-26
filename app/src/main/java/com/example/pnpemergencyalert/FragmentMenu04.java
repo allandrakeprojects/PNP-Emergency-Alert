@@ -55,8 +55,9 @@ public class FragmentMenu04 extends Fragment {
                         int count = 0;
                         for(com.google.firebase.database.DataSnapshot singleSnapshot : dataSnapshot.getChildren()){
                             String p_status = singleSnapshot.child("p_status").getValue(String.class);
-                            if(!p_status.equals("D")){
+                            if(!p_status.equals("D") && !p_status.equals("X")){
                                 count++;
+                                String key = singleSnapshot.child("key").getValue(String.class);
                                 String c_datecreated = singleSnapshot.child("c_datecreated").getValue(String.class);
                                 String c_imgUrl = singleSnapshot.child("c_imgUrl").getValue(String.class);
                                 String c_lat = singleSnapshot.child("c_lat").getValue(String.class);
@@ -78,6 +79,7 @@ public class FragmentMenu04 extends Fragment {
 
                                 alertList.add(
                                     new Alert(
+                                        key,
                                         c_uid,
                                         c_name,
                                         c_imgUrl,

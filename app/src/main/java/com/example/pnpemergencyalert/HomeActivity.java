@@ -193,7 +193,7 @@ public class HomeActivity extends AppCompatActivity
 
                             for(com.google.firebase.database.DataSnapshot singleSnapshot : dataSnapshot.getChildren()){
                                 String p_status = singleSnapshot.child("p_status").getValue(String.class);
-                                if(!p_status.equals("D")){
+                                if(!p_status.equals("D") && !p_status.equals("X")){
                                     last_id = singleSnapshot.getKey();
                                     count++;
                                 }
@@ -259,7 +259,7 @@ public class HomeActivity extends AppCompatActivity
                 for(DataSnapshot alertSnapshot : dataSnapshot.getChildren()){
                     String c_uid = alertSnapshot.child("c_uid").getValue().toString();
                     String status = alertSnapshot.child("p_status").getValue().toString();
-                    if(!status.equals("D") && c_uid.equals(firebaseAuth.getUid())){
+                    if(!status.equals("D") && !status.equals("X") && c_uid.equals(firebaseAuth.getUid())){
                         Boolean read = (Boolean) alertSnapshot.child("c_read").getValue();
                         if(status.equals("O")){
                             if(!read){

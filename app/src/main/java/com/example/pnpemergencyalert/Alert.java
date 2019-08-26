@@ -2,6 +2,7 @@ package com.example.pnpemergencyalert;
 
 public class Alert {
 
+    public String key;
     public String c_uid;
     public String c_name;
     public String c_imgUrl;
@@ -19,7 +20,8 @@ public class Alert {
 
     }
 
-    public Alert(String c_uid, String c_name, String c_imgUrl, String c_lat, String c_lng, String c_datecreated, String p_uid, String p_name, String p_status, String c_message, String c_capture, boolean c_read) {
+    public Alert(String key, String c_uid, String c_name, String c_imgUrl, String c_lat, String c_lng, String c_datecreated, String p_uid, String p_name, String p_status, String c_message, String c_capture, boolean c_read) {
+        this.key = key;
         this.c_uid = c_uid;
         this.c_name = c_name;
         this.c_imgUrl = c_imgUrl;
@@ -32,6 +34,14 @@ public class Alert {
         this.c_message = c_message;
         this.c_capture = c_capture;
         this.c_read = c_read;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
     }
 
     public String getC_uid() {

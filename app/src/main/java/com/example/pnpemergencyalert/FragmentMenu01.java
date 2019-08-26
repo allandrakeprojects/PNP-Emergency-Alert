@@ -193,7 +193,7 @@ public class FragmentMenu01 extends Fragment {
                 boolean detectD = false;
                 for(DataSnapshot alertSnapshot : dataSnapshot.getChildren()){
                     String status = alertSnapshot.child("p_status").getValue().toString();
-                    if(!status.equals("D")){
+                    if(!status.equals("D") && !status.equals("X")){
                         detectD = true;
                         cardViewAlert.setVisibility(View.INVISIBLE);
                         cardViewInfo.setVisibility(View.VISIBLE);
@@ -320,9 +320,9 @@ public class FragmentMenu01 extends Fragment {
 
                                     Information information = dataSnapshot.getValue(Information.class);
                                     FirebaseUser user = firebaseAuth.getCurrentUser();
-                                    Alert alert = new Alert(user.getUid(), information.getName(), information.getImageUrl(), latLng.latitude + "", latLng.longitude + "", dateToStr, "-", "-", "W", input.getText().toString(), downloadURI, false);
-                                    String id = databaseReference.child("Alert").push().getKey();
                                     String parent_id = databaseReference.child("transaction").push().getKey();
+                                    Alert alert = new Alert(parent_id, user.getUid(), information.getName(), information.getImageUrl(), latLng.latitude + "", latLng.longitude + "", dateToStr, "-", "-", "W", input.getText().toString(), downloadURI, false);
+                                    String id = databaseReference.child("Alert").push().getKey();
                                     databaseReference.child("Alert").child(parent_id).setValue(alert);
                                 }
 

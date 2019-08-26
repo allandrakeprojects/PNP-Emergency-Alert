@@ -13,6 +13,7 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -107,12 +108,15 @@ public class AlertAdapter extends RecyclerView.Adapter<AlertAdapter.ProductViewH
         if(alert.getP_status().equals("Waiting")){
             holder.buttonRespond.setVisibility(View.VISIBLE);
             holder.buttonDone.setVisibility(View.GONE);
+            holder.pictureDelete.setVisibility(View.GONE);
         } else if(alert.getP_status().equals("On the way")){
             holder.buttonRespond.setVisibility(View.GONE);
             holder.buttonDone.setVisibility(View.VISIBLE);
+            holder.pictureDelete.setVisibility(View.GONE);
         } else if(alert.getP_status().equals("Done")){
             holder.buttonRespond.setVisibility(View.GONE);
             holder.buttonDone.setVisibility(View.GONE);
+            holder.pictureDelete.setVisibility(View.VISIBLE);
         }
 
         holder.buttonRespond.setOnClickListener(new View.OnClickListener() {
@@ -129,13 +133,13 @@ public class AlertAdapter extends RecyclerView.Adapter<AlertAdapter.ProductViewH
                             alert.setP_uid(user1.getUid());
                             alert.setP_name(information.getName());
 
-                            Query query = FirebaseDatabase.getInstance().getReference().child("Alert").orderByChild("c_uid");
-                            query.equalTo(alert.getC_uid()).addListenerForSingleValueEvent(new ValueEventListener() {
+                            Query query = FirebaseDatabase.getInstance().getReference().child("Alert").orderByKey().limitToLast(1);
+                            query.equalTo(alert.getKey()).addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                                     for(DataSnapshot alertSnapshot : dataSnapshot.getChildren()){
                                         String status = alertSnapshot.child("p_status").getValue().toString();
-                                        if(!status.equals("D")){
+                                        if(!status.equals("D") && !status.equals("X")){
                                             alertSnapshot.getRef().child("p_status").setValue("O");
                                             alertSnapshot.getRef().child("p_uid").setValue(alert.getP_uid());
                                             alertSnapshot.getRef().child("p_name").setValue(alert.getP_name());
@@ -162,8 +166,8 @@ public class AlertAdapter extends RecyclerView.Adapter<AlertAdapter.ProductViewH
         holder.buttonDone.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final Query query = FirebaseDatabase.getInstance().getReference().child("Alert").orderByChild("c_uid");
-                query.equalTo(alert.getC_uid()).addListenerForSingleValueEvent(new ValueEventListener() {
+                final Query query = FirebaseDatabase.getInstance().getReference().child("Alert").orderByKey().limitToLast(1);
+                query.equalTo(alert.getKey()).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         for(DataSnapshot alertSnapshot : dataSnapshot.getChildren()){
@@ -211,6 +215,29 @@ public class AlertAdapter extends RecyclerView.Adapter<AlertAdapter.ProductViewH
                 MyDialog.show();
             }
         });
+
+        holder.imageViewDelete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                Query query = FirebaseDatabase.getInstance().getReference().child("Alert").orderByKey().limitToLast(1);
+                query.equalTo(alert.getKey()).addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        for(DataSnapshot alertSnapshot : dataSnapshot.getChildren()){
+                            alertSnapshot.getRef().child("p_status").setValue("X");
+                        }
+
+                        Toast.makeText(mCtx, "Successfully Deleted.", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
+            }
+        });
     }
 
     @Override
@@ -221,10 +248,10 @@ public class AlertAdapter extends RecyclerView.Adapter<AlertAdapter.ProductViewH
 
     class ProductViewHolder extends RecyclerView.ViewHolder {
 
-        LinearLayout itemDialog;
         TextView textViewInfoList;
-        ImageView imageViewProfileList;
+        ImageView imageViewProfileList, imageViewDelete;
         Button buttonViewMap, buttonRespond, buttonDone, buttonViewImage;
+        RelativeLayout pictureDelete;
 
         public ProductViewHolder(View itemView) {
             super(itemView);
@@ -235,6 +262,8 @@ public class AlertAdapter extends RecyclerView.Adapter<AlertAdapter.ProductViewH
             buttonRespond = itemView.findViewById(R.id.buttonRespond);
             buttonDone = itemView.findViewById(R.id.buttonDone);
             buttonViewImage = itemView.findViewById(R.id.buttonViewImage);
+            imageViewDelete = itemView.findViewById(R.id.imageViewDelete);
+            pictureDelete = itemView.findViewById(R.id.pictureDelete);
         }
     }
 }
