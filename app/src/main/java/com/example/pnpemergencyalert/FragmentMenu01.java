@@ -106,6 +106,8 @@ public class FragmentMenu01 extends Fragment {
     private DatabaseReference databaseReference;
     private EditText input;
 
+    String selectedTypeofIncident;
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -142,20 +144,18 @@ public class FragmentMenu01 extends Fragment {
                     public void onClick(DialogInterface dialog, int which) {
                         switch (which){
                             case DialogInterface.BUTTON_NEGATIVE:
+                                final String[] listItems = { "Accident ", "Crime", "Earthquake", "Fire ", "Flood" };
 
                                 AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                                builder.setTitle("Short Description of Incident");
+                                builder.setTitle("Type of Incident");
 
-                                input = new EditText(getContext());
-                                input.setInputType(InputType.TYPE_TEXT_FLAG_MULTI_LINE);
-                                input.setSingleLine(false);
-                                input.setLines(2);
-                                input.setMaxLines(2);
-                                input.setGravity(Gravity.LEFT | Gravity.TOP);
-                                builder.setView(input);
-                                InputFilter[] FilterArray = new InputFilter[1];
-                                FilterArray[0] = new InputFilter.LengthFilter(100);
-                                input.setFilters(FilterArray);
+                                int checkedItem = 0; //this will checked the item when user open the dialog
+                                builder.setSingleChoiceItems(listItems, checkedItem, new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        selectedTypeofIncident = listItems[which];
+                                    }
+                                });
 
                                 builder.setPositiveButton("Next", new DialogInterface.OnClickListener() {
                                     @Override
@@ -172,6 +172,36 @@ public class FragmentMenu01 extends Fragment {
                                 });
 
                                 builder.show();
+
+//                                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+//                                builder.setTitle("Type of Incident");
+//
+//                                input = new EditText(getContext());
+//                                input.setInputType(InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+//                                input.setSingleLine(false);
+//                                input.setLines(2);
+//                                input.setMaxLines(2);
+//                                input.setGravity(Gravity.LEFT | Gravity.TOP);
+//                                builder.setView(input);
+//                                InputFilter[] FilterArray = new InputFilter[1];
+//                                FilterArray[0] = new InputFilter.LengthFilter(100);
+//                                input.setFilters(FilterArray);
+//
+//                                builder.setPositiveButton("Next", new DialogInterface.OnClickListener() {
+//                                    @Override
+//                                    public void onClick(DialogInterface dialog, int which) {
+//                                        showPictureDialog();
+//                                    }
+//                                });
+//
+//                                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+//                                    @Override
+//                                    public void onClick(DialogInterface dialog, int which) {
+//                                        dialog.cancel();
+//                                    }
+//                                });
+//
+//                                builder.show();
                                 break;
                             case DialogInterface.BUTTON_POSITIVE:
                                 //No button clicked
@@ -321,7 +351,8 @@ public class FragmentMenu01 extends Fragment {
                                     Information information = dataSnapshot.getValue(Information.class);
                                     FirebaseUser user = firebaseAuth.getCurrentUser();
                                     String parent_id = databaseReference.child("transaction").push().getKey();
-                                    Alert alert = new Alert(parent_id, user.getUid(), information.getName(), information.getImageUrl(), latLng.latitude + "", latLng.longitude + "", dateToStr, "-", "-", "W", input.getText().toString(), downloadURI, false);
+                                    Toast.makeText(getActivity(), selectedTypeofIncident, Toast.LENGTH_SHORT).show();
+                                    Alert alert = new Alert(parent_id, user.getUid(), information.getName(), information.getImageUrl(), latLng.latitude + "", latLng.longitude + "", dateToStr, "-", "-", "W", selectedTypeofIncident, downloadURI, false);
                                     String id = databaseReference.child("Alert").push().getKey();
                                     databaseReference.child("Alert").child(parent_id).setValue(alert);
                                 }
