@@ -194,12 +194,32 @@ public class AlertAdapter extends RecyclerView.Adapter<AlertAdapter.ProductViewH
                 MyDialog.setContentView(R.layout.activity_custom_dialog);
 
                 TextView textViewDialogMessage = MyDialog.findViewById(R.id.textViewDialogMessage);
-                ImageView imageViewDialogCapture = MyDialog.findViewById(R.id.imageViewDialogCapture);
+                ImageView imageViewDialogCapture01 = MyDialog.findViewById(R.id.imageViewDialogCapture01);
+                ImageView imageViewDialogCapture02 = MyDialog.findViewById(R.id.imageViewDialogCapture02);
+                ImageView imageViewDialogCapture03 = MyDialog.findViewById(R.id.imageViewDialogCapture03);
                 Button buttonDialogClose = MyDialog.findViewById(R.id.buttonDialogClose);
 
-                Glide.with(mCtx)
-                        .load(alert.getC_capture())
-                        .into(imageViewDialogCapture);
+                String images = alert.getC_capture();
+                String[] imagesList = images.split(",");
+
+                int count = 0;
+                for(String name : imagesList){
+                    count++;
+                    if(count == 1){
+                        Glide.with(mCtx)
+                            .load(name)
+                            .into(imageViewDialogCapture01);
+                    } else if(count == 2){
+                        Glide.with(mCtx)
+                            .load(name)
+                            .into(imageViewDialogCapture02);
+                    } else if(count == 3){
+                        Glide.with(mCtx)
+                                .load(name)
+                                .into(imageViewDialogCapture03);
+                    }
+                }
+
 
                 textViewDialogMessage.setText(alert.getC_message());
 
