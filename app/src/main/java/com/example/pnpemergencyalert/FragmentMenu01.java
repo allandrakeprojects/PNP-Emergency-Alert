@@ -558,6 +558,8 @@ public class FragmentMenu01 extends Fragment {
                     downloadURI = task.getResult().toString();
                     getLocationPermission();
                     getDeviceLocation(downloadURI);
+                    PIC_CODE = 0;
+                    downloadURI = "";
                 } else {
                     // Handle failures
                     // ...
@@ -649,6 +651,8 @@ public class FragmentMenu01 extends Fragment {
                     downloadURI += task.getResult().toString();
                     getLocationPermission();
                     getDeviceLocation(downloadURI);
+                    PIC_CODE = 0;
+                    downloadURI = "";
                 } else {
                     // Handle failures
                     // ...
@@ -785,6 +789,8 @@ public class FragmentMenu01 extends Fragment {
                     downloadURI += task.getResult().toString() + ',';
                     getLocationPermission();
                     getDeviceLocation(downloadURI);
+                    PIC_CODE = 0;
+                    downloadURI = "";
                 } else {
                     // Handle failures
                     // ...
