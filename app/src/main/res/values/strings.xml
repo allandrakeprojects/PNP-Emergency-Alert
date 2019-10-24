@@ -8,6 +8,12 @@
         <item>Male</item>
         <item>Female</item>
     </string-array>
+
+    <string name="sort_prompt">Sort by</string>
+    <string-array name="sort">
+        <item>Newest</item>
+        <item>Oldest</item>
+    </string-array>
     <!--for facebook login-->
 
     <!--facebook login ends-->

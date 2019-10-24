@@ -1,11 +1,16 @@
 package com.example.pnpemergencyalert;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -26,6 +31,8 @@ public class FragmentMenu04 extends Fragment {
     List<Alert> alertList;
     RecyclerView recyclerView;
     TextView textViewNoDataYet;
+    Spinner spinnerSort;
+    LinearLayoutManager mLayoutManager;
 
     @Nullable
     @Override
@@ -36,11 +43,46 @@ public class FragmentMenu04 extends Fragment {
 
         textViewNoDataYet = (TextView)view.findViewById(R.id.textViewNoDataYet);
 
+        spinnerSort = view.findViewById(R.id.spinnerSort);
+
         recyclerView = (RecyclerView)view.findViewById(R.id.recyclerView);
         recyclerView.setHasFixedSize(true);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity().getApplicationContext()));
+        mLayoutManager = new LinearLayoutManager(getActivity().getApplicationContext());
+        recyclerView.setLayoutManager(mLayoutManager);
 
         alertList = new ArrayList<>();
+
+        SharedPreferences settings = getActivity().getSharedPreferences("pref", Context.MODE_PRIVATE);
+        String get_sort = settings.getString("sort_alerts", "Newest");
+        if(get_sort.equals("Newest")){
+            mLayoutManager.setReverseLayout(true);
+            spinnerSort.setSelection(0);
+        } else {
+            mLayoutManager.setReverseLayout(false);
+            spinnerSort.setSelection(1);
+        }
+
+        spinnerSort.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                SharedPreferences settings = getActivity().getSharedPreferences("pref", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = settings.edit();
+                editor.putString("sort_alerts", parentView.getItemAtPosition(position).toString());
+                editor.commit();
+                String sort_selected = parentView.getItemAtPosition(position).toString();
+                if(sort_selected.equals("Newest")){
+                    mLayoutManager.setReverseLayout(true);
+                } else {
+                    mLayoutManager.setReverseLayout(false);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parentView) {
+                // your code here
+            }
+        });
+
 
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("Alert");
         ref.addValueEventListener(
@@ -96,8 +138,10 @@ public class FragmentMenu04 extends Fragment {
                         }
 
                         if(count == 0){
+                            spinnerSort.setVisibility(View.GONE);
                             textViewNoDataYet.setVisibility(View.VISIBLE);
                         } else{
+                            spinnerSort.setVisibility(View.VISIBLE);
                             textViewNoDataYet.setVisibility(View.GONE);
                         }
 
