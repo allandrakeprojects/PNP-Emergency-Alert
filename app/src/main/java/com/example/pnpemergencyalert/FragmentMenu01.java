@@ -68,12 +68,13 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 import pl.droidsonroids.gif.GifImageView;
 
 public class FragmentMenu01 extends Fragment {
 
-    private ImageView imageViewAlert, imageViewProfile, imageViewAlertCapture;
+    private ImageView imageViewAlert, imageViewProfile, imageViewAlertCapture01, imageViewAlertCapture02, imageViewAlertCapture03;
     private GifImageView gifAlert;
     private CardView cardViewInfo, cardViewAlert;
     private TextView textViewName, textViewStatus;
@@ -129,7 +130,9 @@ public class FragmentMenu01 extends Fragment {
     private void init(View view){
         imageViewAlert = (ImageView)view.findViewById(R.id.imageViewAlert);
         imageViewProfile = (ImageView)view.findViewById(R.id.imageViewProfile);
-        imageViewAlertCapture = (ImageView)view.findViewById(R.id.imageViewAlertCapture);
+        imageViewAlertCapture01 = (ImageView)view.findViewById(R.id.imageViewAlertCapture01);
+        imageViewAlertCapture02 = (ImageView)view.findViewById(R.id.imageViewAlertCapture02);
+        imageViewAlertCapture03 = (ImageView)view.findViewById(R.id.imageViewAlertCapture03);
         gifAlert = (GifImageView)view.findViewById(R.id.gifAlert);
         cardViewInfo = (CardView) view.findViewById(R.id.cardViewInfo);
         cardViewAlert = (CardView) view.findViewById(R.id.cardViewAlert);
@@ -160,6 +163,7 @@ public class FragmentMenu01 extends Fragment {
                                 builder.setPositiveButton("Next", new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
+                                        Toast.makeText(getContext(), "You can press ✓ to continue capture multiple image or ✗ to send the emergency. Limit 3 images.", Toast.LENGTH_LONG).show();
                                         showPictureDialog();
                                     }
                                 });
@@ -172,36 +176,6 @@ public class FragmentMenu01 extends Fragment {
                                 });
 
                                 builder.show();
-
-//                                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-//                                builder.setTitle("Type of Incident");
-//
-//                                input = new EditText(getContext());
-//                                input.setInputType(InputType.TYPE_TEXT_FLAG_MULTI_LINE);
-//                                input.setSingleLine(false);
-//                                input.setLines(2);
-//                                input.setMaxLines(2);
-//                                input.setGravity(Gravity.LEFT | Gravity.TOP);
-//                                builder.setView(input);
-//                                InputFilter[] FilterArray = new InputFilter[1];
-//                                FilterArray[0] = new InputFilter.LengthFilter(100);
-//                                input.setFilters(FilterArray);
-//
-//                                builder.setPositiveButton("Next", new DialogInterface.OnClickListener() {
-//                                    @Override
-//                                    public void onClick(DialogInterface dialog, int which) {
-//                                        showPictureDialog();
-//                                    }
-//                                });
-//
-//                                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-//                                    @Override
-//                                    public void onClick(DialogInterface dialog, int which) {
-//                                        dialog.cancel();
-//                                    }
-//                                });
-//
-//                                builder.show();
                                 break;
                             case DialogInterface.BUTTON_POSITIVE:
                                 //No button clicked
@@ -351,7 +325,6 @@ public class FragmentMenu01 extends Fragment {
                                     Information information = dataSnapshot.getValue(Information.class);
                                     FirebaseUser user = firebaseAuth.getCurrentUser();
                                     String parent_id = databaseReference.child("transaction").push().getKey();
-                                    Toast.makeText(getActivity(), selectedTypeofIncident, Toast.LENGTH_SHORT).show();
                                     Alert alert = new Alert(parent_id, user.getUid(), information.getName(), information.getImageUrl(), latLng.latitude + "", latLng.longitude + "", dateToStr, "-", "-", "W", selectedTypeofIncident, downloadURI, false);
                                     String id = databaseReference.child("Alert").push().getKey();
                                     databaseReference.child("Alert").child(parent_id).setValue(alert);
@@ -426,17 +399,6 @@ public class FragmentMenu01 extends Fragment {
         }
     }
 
-
-
-
-
-
-
-
-
-
-
-
     private void showPictureDialog(){
         takePhotoFromCamera();
     }
@@ -453,11 +415,25 @@ public class FragmentMenu01 extends Fragment {
         startActivityForResult(intent, CAMERA);
     }
 
+    public int PIC_CODE = 0;
+    public String downloadURI = "";
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == getActivity().RESULT_CANCELED) {
+            if(PIC_CODE != 0){
+                cardViewAlert.setVisibility(View.INVISIBLE);
+                cardViewInfo.setVisibility(View.VISIBLE);
+            }
+            if(PIC_CODE == 1){
+                uploadFile01();
+            } else if(PIC_CODE == 2){
+                uploadFile02();
+            } else if(PIC_CODE == 3){
+                uploadFile03();
+            }
             return;
         }
         if (requestCode == GALLERY) {
@@ -467,8 +443,8 @@ public class FragmentMenu01 extends Fragment {
                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContext().getContentResolver(), contentURI);
 //                    String path = saveImage(bitmap);
 //                    Toast.makeText(RegisterActivity.this, "Image Saved!", Toast.LENGTH_SHORT).show();
-                    imageViewAlertCapture.setImageBitmap(bitmap);
-                    imageViewAlertCapture.setTag("changesImage");
+                    imageViewAlertCapture01.setImageBitmap(bitmap);
+                    imageViewAlertCapture01.setTag("changesImage");
                 } catch (IOException e) {
                     e.printStackTrace();
                     Toast.makeText(getContext(), "Failed!", Toast.LENGTH_SHORT).show();
@@ -476,16 +452,44 @@ public class FragmentMenu01 extends Fragment {
             }
 
         } else if (requestCode == CAMERA) {
-            Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
-            imageViewAlertCapture.setImageBitmap(thumbnail);
-            saveImage(thumbnail);
-            imageViewAlertCapture.setTag("changesImage");
-            cardViewAlert.setVisibility(View.INVISIBLE);
-            cardViewInfo.setVisibility(View.VISIBLE);
-            uploadFile();
+            if(PIC_CODE < 3){
+                PIC_CODE++;
+
+                if(PIC_CODE == 1){
+                    Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
+                    imageViewAlertCapture01.setImageBitmap(thumbnail);
+                    saveImage(thumbnail);
+                    imageViewAlertCapture01.setTag("changesImage");
+
+                    Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+                    startActivityForResult(intent, CAMERA);
+                } else if(PIC_CODE == 2) {
+                    Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
+                    imageViewAlertCapture02.setImageBitmap(thumbnail);
+                    saveImage(thumbnail);
+                    imageViewAlertCapture02.setTag("changesImage");
+
+                    Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+                    startActivityForResult(intent, CAMERA);
+                } else if(PIC_CODE == 3) {
+                    Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
+                    imageViewAlertCapture03.setImageBitmap(thumbnail);
+                    saveImage(thumbnail);
+                    imageViewAlertCapture03.setTag("changesImage");
+                }
+            }
+
+//            uploadFile();
 //            Toast.makeText(RegisterActivity.this, "Image Saved!", Toast.LENGTH_SHORT).show();
+
+            if(PIC_CODE == 3){
+                cardViewAlert.setVisibility(View.INVISIBLE);
+                cardViewInfo.setVisibility(View.VISIBLE);
+                uploadFile03();
+            }
         }
     }
+
 
     public String saveImage(Bitmap myBitmap) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -516,12 +520,11 @@ public class FragmentMenu01 extends Fragment {
         return "";
     }
 
-    private void uploadFile() {
+    private void uploadFile01() {
         final StorageReference storageReference1 = storageReference.child(System.currentTimeMillis() + ".jpg");
-
-        imageViewAlertCapture.setDrawingCacheEnabled(true);
-        imageViewAlertCapture.buildDrawingCache();
-        Bitmap bitmap = ((BitmapDrawable) imageViewAlertCapture.getDrawable()).getBitmap();
+        imageViewAlertCapture01.setDrawingCacheEnabled(true);
+        imageViewAlertCapture01.buildDrawingCache();
+        Bitmap bitmap = ((BitmapDrawable) imageViewAlertCapture01.getDrawable()).getBitmap();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
         byte[] data = baos.toByteArray();
@@ -552,10 +555,9 @@ public class FragmentMenu01 extends Fragment {
             @Override
             public void onComplete(@NonNull Task<Uri> task) {
                 if (task.isSuccessful()) {
-                    Uri downloadURI = task.getResult();
+                    downloadURI = task.getResult().toString();
                     getLocationPermission();
-                    getDeviceLocation(downloadURI.toString());
-
+                    getDeviceLocation(downloadURI);
                 } else {
                     // Handle failures
                     // ...
@@ -564,4 +566,230 @@ public class FragmentMenu01 extends Fragment {
         });
     }
 
+    private void uploadFile02() {
+        final StorageReference storageReference1 = storageReference.child(System.currentTimeMillis() + ".jpg");
+        imageViewAlertCapture01.setDrawingCacheEnabled(true);
+        imageViewAlertCapture01.buildDrawingCache();
+        Bitmap bitmap = ((BitmapDrawable) imageViewAlertCapture01.getDrawable()).getBitmap();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] data = baos.toByteArray();
+
+        UploadTask uploadTask = storageReference1.putBytes(data);
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Handle unsuccessful uploads
+            }
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+            }
+        });
+
+        Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+            @Override
+            public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                if (!task.isSuccessful()) {
+                    throw task.getException();
+                }
+
+                // Continue with the task to get the download URL
+                return storageReference1.getDownloadUrl();
+            }
+        }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+            @Override
+            public void onComplete(@NonNull Task<Uri> task) {
+                if (task.isSuccessful()) {
+                    downloadURI += task.getResult().toString() + ',';
+                    uploadFile022();
+                } else {
+                    // Handle failures
+                    // ...
+                }
+            }
+        });
+    }
+
+    public void uploadFile022() {
+        final StorageReference storageReference1 = storageReference.child(System.currentTimeMillis() + ".jpg");
+        imageViewAlertCapture02.setDrawingCacheEnabled(true);
+        imageViewAlertCapture02.buildDrawingCache();
+        Bitmap bitmap = ((BitmapDrawable) imageViewAlertCapture02.getDrawable()).getBitmap();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] data = baos.toByteArray();
+
+        UploadTask uploadTask = storageReference1.putBytes(data);
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Handle unsuccessful uploads
+            }
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+            }
+        });
+
+        Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+            @Override
+            public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                if (!task.isSuccessful()) {
+                    throw task.getException();
+                }
+
+                // Continue with the task to get the download URL
+                return storageReference1.getDownloadUrl();
+            }
+        }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+            @Override
+            public void onComplete(@NonNull Task<Uri> task) {
+                if (task.isSuccessful()) {
+                    downloadURI += task.getResult().toString();
+                    getLocationPermission();
+                    getDeviceLocation(downloadURI);
+                } else {
+                    // Handle failures
+                    // ...
+                }
+            }
+        });
+    }
+
+    private void uploadFile03() {
+        final StorageReference storageReference1 = storageReference.child(System.currentTimeMillis() + ".jpg");
+        imageViewAlertCapture01.setDrawingCacheEnabled(true);
+        imageViewAlertCapture01.buildDrawingCache();
+        Bitmap bitmap = ((BitmapDrawable) imageViewAlertCapture01.getDrawable()).getBitmap();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] data = baos.toByteArray();
+
+        UploadTask uploadTask = storageReference1.putBytes(data);
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Handle unsuccessful uploads
+            }
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+            }
+        });
+
+        Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+            @Override
+            public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                if (!task.isSuccessful()) {
+                    throw task.getException();
+                }
+
+                // Continue with the task to get the download URL
+                return storageReference1.getDownloadUrl();
+            }
+        }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+            @Override
+            public void onComplete(@NonNull Task<Uri> task) {
+                if (task.isSuccessful()) {
+                    downloadURI += task.getResult().toString() + ',';
+                    uploadFile0222();
+                } else {
+                    // Handle failures
+                    // ...
+                }
+            }
+        });
+    }
+
+    public void uploadFile0222() {
+        final StorageReference storageReference1 = storageReference.child(System.currentTimeMillis() + ".jpg");
+        imageViewAlertCapture02.setDrawingCacheEnabled(true);
+        imageViewAlertCapture02.buildDrawingCache();
+        Bitmap bitmap = ((BitmapDrawable) imageViewAlertCapture02.getDrawable()).getBitmap();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] data = baos.toByteArray();
+
+        UploadTask uploadTask = storageReference1.putBytes(data);
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Handle unsuccessful uploads
+            }
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+            }
+        });
+
+        Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+            @Override
+            public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                if (!task.isSuccessful()) {
+                    throw task.getException();
+                }
+
+                // Continue with the task to get the download URL
+                return storageReference1.getDownloadUrl();
+            }
+        }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+            @Override
+            public void onComplete(@NonNull Task<Uri> task) {
+                if (task.isSuccessful()) {
+                    downloadURI += task.getResult().toString() + ',';
+                    uploadFile0333();
+                } else {
+                    // Handle failures
+                    // ...
+                }
+            }
+        });
+    }
+
+    public void uploadFile0333() {
+        final StorageReference storageReference1 = storageReference.child(System.currentTimeMillis() + ".jpg");
+        imageViewAlertCapture03.setDrawingCacheEnabled(true);
+        imageViewAlertCapture03.buildDrawingCache();
+        Bitmap bitmap = ((BitmapDrawable) imageViewAlertCapture03.getDrawable()).getBitmap();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] data = baos.toByteArray();
+
+        UploadTask uploadTask = storageReference1.putBytes(data);
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Handle unsuccessful uploads
+            }
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+            }
+        });
+
+        Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+            @Override
+            public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                if (!task.isSuccessful()) {
+                    throw task.getException();
+                }
+
+                // Continue with the task to get the download URL
+                return storageReference1.getDownloadUrl();
+            }
+        }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+            @Override
+            public void onComplete(@NonNull Task<Uri> task) {
+                if (task.isSuccessful()) {
+                    downloadURI += task.getResult().toString() + ',';
+                    getLocationPermission();
+                    getDeviceLocation(downloadURI);
+                } else {
+                    // Handle failures
+                    // ...
+                }
+            }
+        });
+    }
 }
