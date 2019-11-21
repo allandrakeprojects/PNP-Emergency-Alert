@@ -9,11 +9,13 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Debug;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.Editable;
@@ -28,6 +30,7 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -66,10 +69,13 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import droidninja.filepicker.FilePickerBuilder;
+import droidninja.filepicker.FilePickerConst;
 import pl.droidsonroids.gif.GifImageView;
 
 public class FragmentMenu01 extends Fragment {
@@ -108,6 +114,7 @@ public class FragmentMenu01 extends Fragment {
     private EditText input;
 
     String selectedTypeofIncident;
+    String selectedCameraOrGallery;
 
     @Nullable
     @Override
@@ -146,8 +153,8 @@ public class FragmentMenu01 extends Fragment {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         switch (which){
-                            case DialogInterface.BUTTON_NEGATIVE:
-                                final String[] listItems = { "Accident ", "Crime", "Earthquake", "Fire ", "Flood" };
+                            case DialogInterface.BUTTON_POSITIVE:
+                                final String[] listItems = { "Driver’s Errors ", "Mechanical Defect", "Over Speeding", "Drunk Driver", "Damaged Roads" };
 
                                 AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                                 builder.setTitle("Type of Incident");
@@ -163,8 +170,7 @@ public class FragmentMenu01 extends Fragment {
                                 builder.setPositiveButton("Next", new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
-                                        Toast.makeText(getContext(), "You can press ✓ to continue capture multiple image or ✗ to send the emergency. Limit 3 images.", Toast.LENGTH_LONG).show();
-                                        showPictureDialog();
+                                        choosePhoto();
                                     }
                                 });
 
@@ -177,7 +183,7 @@ public class FragmentMenu01 extends Fragment {
 
                                 builder.show();
                                 break;
-                            case DialogInterface.BUTTON_POSITIVE:
+                            case DialogInterface.BUTTON_NEGATIVE:
                                 //No button clicked
                                 break;
                         }
@@ -185,8 +191,8 @@ public class FragmentMenu01 extends Fragment {
                 };
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
-                builder.setMessage("PNP Emergency Alert").setPositiveButton("Cancel", dialogClickListener)
-                        .setNegativeButton("Report an incident", dialogClickListener).show();
+                builder.setMessage("PNP Emergency Alert").setNegativeButton("Cancel", dialogClickListener)
+                        .setPositiveButton("Report an incident", dialogClickListener).show();
             }
         });
 
@@ -403,11 +409,18 @@ public class FragmentMenu01 extends Fragment {
         takePhotoFromCamera();
     }
 
-    public void choosePhotoFromGallary() {
-        Intent galleryIntent = new Intent(Intent.ACTION_PICK,
-                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+    ArrayList<String> filePaths = new ArrayList<>();
 
-        startActivityForResult(galleryIntent, GALLERY);
+    public void choosePhoto() {
+        filePaths.clear();
+        FilePickerBuilder.getInstance().setMaxCount(3)
+                .setSelectedFiles(filePaths)
+                .setActivityTheme(R.style.Theme_AppCompat_DayNight)
+                .pickPhoto(this);
+//        Intent galleryIntent = new Intent(Intent.ACTION_PICK,
+//                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+//
+//        startActivityForResult(galleryIntent, GALLERY);
     }
 
     private void takePhotoFromCamera() {
@@ -418,77 +431,167 @@ public class FragmentMenu01 extends Fragment {
     public int PIC_CODE = 0;
     public String downloadURI = "";
 
+//    @Override
+//    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+//
+//        super.onActivityResult(requestCode, resultCode, data);
+//        if (resultCode == getActivity().RESULT_CANCELED) {
+//            if(PIC_CODE != 0){
+//                cardViewAlert.setVisibility(View.INVISIBLE);
+//                cardViewInfo.setVisibility(View.VISIBLE);
+//            }
+//            if(PIC_CODE == 1){
+//                uploadFile01();
+//            } else if(PIC_CODE == 2){
+//                uploadFile02();
+//            } else if(PIC_CODE == 3){
+//                uploadFile03();
+//            }
+//            return;
+//        }
+//
+//        Toast.makeText(getActivity(), "test teasdsast 123", Toast.LENGTH_SHORT).show();
+//        Log.d("test", "teasdsast");
+//
+//        switch (requestCode){
+//            case FilePickerConst.REQUEST_CODE:
+//                Toast.makeText(getActivity(), "test detect 123", Toast.LENGTH_SHORT).show();
+//                Log.d("test", "test");
+//        }
+//
+//        if (requestCode == FilePickerConst.REQUEST_CODE) {
+//            Toast.makeText(getActivity(), "test detect 123", Toast.LENGTH_SHORT).show();
+//            Log.d("test", "dasdas123");
+//        }
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//        else if (requestCode == CAMERA) {
+//            if(PIC_CODE < 3){
+//                PIC_CODE++;
+//
+//                if(PIC_CODE == 1){
+//                    Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
+//                    imageViewAlertCapture01.setImageBitmap(thumbnail);
+//                    saveImage(thumbnail);
+//                    imageViewAlertCapture01.setTag("changesImage");
+//
+//                    Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+//                    startActivityForResult(intent, CAMERA);
+//                } else if(PIC_CODE == 2) {
+//                    Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
+//                    imageViewAlertCapture02.setImageBitmap(thumbnail);
+//                    saveImage(thumbnail);
+//                    imageViewAlertCapture02.setTag("changesImage");
+//
+//                    Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+//                    startActivityForResult(intent, CAMERA);
+//                } else if(PIC_CODE == 3) {
+//                    Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
+//                    imageViewAlertCapture03.setImageBitmap(thumbnail);
+//                    saveImage(thumbnail);
+//                    imageViewAlertCapture03.setTag("changesImage");
+//                }
+//            }
+//
+////            uploadFile();
+////            Toast.makeText(RegisterActivity.this, "Image Saved!", Toast.LENGTH_SHORT).show();
+//
+//            if(PIC_CODE == 3){
+//                cardViewAlert.setVisibility(View.INVISIBLE);
+//                cardViewInfo.setVisibility(View.VISIBLE);
+//                uploadFile03();
+//            }
+//        }
+//    }
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode)
+        {
+            case FilePickerConst.REQUEST_CODE_PHOTO:
+                if(resultCode== Activity.RESULT_OK && data!=null)
+                {
+                    filePaths.addAll(data.getStringArrayListExtra(FilePickerConst.KEY_SELECTED_MEDIA));
 
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == getActivity().RESULT_CANCELED) {
-            if(PIC_CODE != 0){
-                cardViewAlert.setVisibility(View.INVISIBLE);
-                cardViewInfo.setVisibility(View.VISIBLE);
-            }
-            if(PIC_CODE == 1){
-                uploadFile01();
-            } else if(PIC_CODE == 2){
-                uploadFile02();
-            } else if(PIC_CODE == 3){
-                uploadFile03();
-            }
-            return;
-        }
-        if (requestCode == GALLERY) {
-            if (data != null) {
-                contentURI = data.getData();
-                try {
-                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContext().getContentResolver(), contentURI);
-//                    String path = saveImage(bitmap);
-//                    Toast.makeText(RegisterActivity.this, "Image Saved!", Toast.LENGTH_SHORT).show();
-                    imageViewAlertCapture01.setImageBitmap(bitmap);
-                    imageViewAlertCapture01.setTag("changesImage");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    Toast.makeText(getContext(), "Failed!", Toast.LENGTH_SHORT).show();
+                    try {
+                        for(String path : filePaths) {
+                            PIC_CODE++;
+
+                            if(PIC_CODE == 1){
+                                File file = new  File(path);
+                                Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
+                                imageViewAlertCapture01.setImageBitmap(bitmap);
+                            } else if(PIC_CODE == 2){
+                                File file = new  File(path);
+                                Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
+                                imageViewAlertCapture02.setImageBitmap(bitmap);
+                            } else if(PIC_CODE == 3){
+                                File file = new  File(path);
+                                Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
+                                imageViewAlertCapture03.setImageBitmap(bitmap);
+                            }
+                        }
+
+                        if(PIC_CODE == 1){
+                            uploadFile01();
+                        } else if(PIC_CODE == 2){
+                            uploadFile02();
+                        } else if(PIC_CODE == 3){
+                            uploadFile03();
+                        }
+
+                        if(PIC_CODE != 0){
+                            cardViewAlert.setVisibility(View.INVISIBLE);
+                            cardViewInfo.setVisibility(View.VISIBLE);
+                        } else {
+                            Toast.makeText(getContext(), "No Selected Photo.", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                    catch (Exception err){
+                        Log.d("test", "Error " + err.getMessage());
+                    }
+
+                } else {
+                    Toast.makeText(getContext(), "No Selected Photo.", Toast.LENGTH_SHORT).show();
                 }
-            }
-
-        } else if (requestCode == CAMERA) {
-            if(PIC_CODE < 3){
-                PIC_CODE++;
-
-                if(PIC_CODE == 1){
-                    Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
-                    imageViewAlertCapture01.setImageBitmap(thumbnail);
-                    saveImage(thumbnail);
-                    imageViewAlertCapture01.setTag("changesImage");
-
-                    Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-                    startActivityForResult(intent, CAMERA);
-                } else if(PIC_CODE == 2) {
-                    Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
-                    imageViewAlertCapture02.setImageBitmap(thumbnail);
-                    saveImage(thumbnail);
-                    imageViewAlertCapture02.setTag("changesImage");
-
-                    Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-                    startActivityForResult(intent, CAMERA);
-                } else if(PIC_CODE == 3) {
-                    Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
-                    imageViewAlertCapture03.setImageBitmap(thumbnail);
-                    saveImage(thumbnail);
-                    imageViewAlertCapture03.setTag("changesImage");
-                }
-            }
-
-//            uploadFile();
-//            Toast.makeText(RegisterActivity.this, "Image Saved!", Toast.LENGTH_SHORT).show();
-
-            if(PIC_CODE == 3){
-                cardViewAlert.setVisibility(View.INVISIBLE);
-                cardViewInfo.setVisibility(View.VISIBLE);
-                uploadFile03();
-            }
+                break;
         }
     }
+
+
+
+
+
+
+
+
 
 
     public String saveImage(Bitmap myBitmap) {
